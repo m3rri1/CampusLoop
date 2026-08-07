@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { Heart, MapPin, BadgeCheck, Star } from "lucide-react";
+import Link from "next/link";
 import { Item } from "@/lib/types";
 
 interface ItemCardProps {
@@ -13,7 +14,10 @@ export function ItemCard({ item }: ItemCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <Link
+  href={`/marketplace/${item.id}`}
+  className="block overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow"
+>
       {/* Image with badges */}
       <div className="relative w-full h-36 bg-gray-100">
         <Image
@@ -35,7 +39,10 @@ export function ItemCard({ item }: ItemCardProps) {
 
         {/* Wishlist heart - bottom right of image */}
         <button
-          onClick={() => setIsWishlisted(!isWishlisted)}
+          onClick={(e) => {
+  e.preventDefault();
+  setIsWishlisted(!isWishlisted);
+}}
           className="absolute bottom-2 right-2 bg-white/90 p-1.5 rounded-full"
         >
           <Heart
@@ -68,6 +75,6 @@ export function ItemCard({ item }: ItemCardProps) {
           )}
         </div>
       </div>
-    </div>
+</Link>
   );
 }
