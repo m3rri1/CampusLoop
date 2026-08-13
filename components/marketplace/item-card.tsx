@@ -15,12 +15,12 @@ export function ItemCard({ item }: ItemCardProps) {
 
   return (
     <Link href={`/marketplace/${item.id}`} className="group block">
-      <div className="relative aspect-[4/4.35] overflow-hidden rounded-xl bg-[#F1F2F4]">
+      <div className="relative aspect-[4/4.25] overflow-hidden rounded-[18px] bg-[#F0F1F4]">
         <Image
           src={item.imageUrl}
           alt={item.title}
           fill
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.025]"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.035]"
         />
 
         <button
@@ -29,30 +29,33 @@ export function ItemCard({ item }: ItemCardProps) {
             setIsWishlisted((value) => !value);
           }}
           aria-label="Add to wishlist"
-          className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm backdrop-blur"
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-[0_2px_12px_rgba(23,35,61,0.12)]"
         >
           <Heart
-            size={15}
+            size={16}
+            strokeWidth={2}
             className={isWishlisted ? "fill-[#E5484D] text-[#E5484D]" : "text-[#17233D]"}
           />
         </button>
 
-        <span className="absolute left-2.5 bottom-2.5 rounded-md bg-[#17233D]/90 px-2 py-1 text-[10px] font-semibold text-white">
+        <span className="absolute left-3 bottom-3 rounded-md bg-[#17233D] px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
           {item.categoryLabel}
         </span>
       </div>
 
       <div className="pt-3 px-0.5">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="min-w-0 text-sm font-semibold leading-5 text-[#17233D] line-clamp-2">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-w-0 text-[13px] font-bold leading-[18px] text-[#17233D] line-clamp-2">
             {item.title}
           </h3>
-          <span className="shrink-0 text-sm font-bold text-[#6546D9]">₹{item.price}</span>
+          <span className="shrink-0 text-[14px] font-extrabold tracking-tight text-[#6546D9]">
+            ₹{item.price}
+          </span>
         </div>
 
-        <p className="mt-1 text-xs text-[#7B8394]">{item.condition}</p>
+        <p className="mt-1 text-[11px] font-medium text-[#7B8394]">{item.condition}</p>
 
-        <div className="mt-2 flex items-center gap-1.5 text-xs text-[#697286]">
+        <div className="mt-2.5 flex items-center gap-1.5 text-[11px] font-medium text-[#697286]">
           <span className="truncate">{item.sellerName}</span>
           {item.sellerVerified && <BadgeCheck size={13} className="shrink-0 text-[#6546D9]" />}
           <span className="text-[#C8CCD4]">·</span>
