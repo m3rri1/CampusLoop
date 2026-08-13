@@ -119,12 +119,12 @@ export default function LostFoundPage() {
                 <p className="mt-1.5 text-[13px] font-medium text-[#6D7184]">Find things reported lost or found around your campus.</p>
               </div>
               <div className="hidden shrink-0 gap-2 sm:flex">
-                <button className="flex h-10 items-center gap-2 rounded-[14px] bg-[#23265B] px-4 text-[11px] font-semibold text-white">
+                <Link href="/lost-found/report-lost" className="flex h-10 items-center gap-2 rounded-[14px] bg-[#23265B] px-4 text-[11px] font-semibold text-white">
                   <Plus size={15} /> Report lost
-                </button>
-                <button className="flex h-10 items-center gap-2 rounded-[14px] border border-[#E2DED5] bg-[#FFFDF9] px-4 text-[11px] font-semibold text-[#303756]">
+                </Link>
+                <Link href="/lost-found/report-found" className="flex h-10 items-center gap-2 rounded-[14px] border border-[#E2DED5] bg-[#FFFDF9] px-4 text-[11px] font-semibold text-[#303756]">
                   <Plus size={15} /> Report found
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -224,9 +224,14 @@ export default function LostFoundPage() {
           )}
         </section>
 
-        <button className="fixed bottom-5 right-5 flex h-11 items-center gap-2 rounded-full bg-[#23265B] px-4 text-[11px] font-bold text-white shadow-[0_10px_25px_rgba(35,38,91,0.22)] sm:hidden">
-          <Plus size={15} /> Report item
-        </button>
+        <div className="fixed bottom-5 right-5 flex gap-2 sm:hidden">
+          <Link href="/lost-found/report-lost" className="flex h-11 items-center gap-2 rounded-full bg-[#23265B] px-4 text-[11px] font-bold text-white shadow-[0_10px_25px_rgba(35,38,91,0.22)]">
+            <Plus size={15} /> Report lost
+          </Link>
+          <Link href="/lost-found/report-found" className="flex h-11 items-center justify-center rounded-full border border-[#DAD6CE] bg-[#FFFDF9] px-4 text-[11px] font-bold text-[#23265B] shadow-[0_10px_25px_rgba(23,32,68,0.08)]">
+            Found
+          </Link>
+        </div>
       </div>
     </main>
   );
