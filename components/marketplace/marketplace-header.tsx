@@ -25,15 +25,22 @@ export function MarketplaceHeader({
 }: MarketplaceHeaderProps) {
   return (
     <header className="px-5 pt-5 pb-4 border-b border-[#E8E9EE]">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <img
-            src="/campusloop-logo.svg"
-            alt="CampusLoop"
-            className="h-12 w-auto object-contain object-left"
-          />
-          <p className="mt-1 text-sm text-[#687086]">Your campus, in one loop.</p>
+          <div className="flex items-center gap-2.5">
+            <img src="/campusloop-mark.svg" alt="" className="h-10 w-[72px] object-contain object-left" />
+            <div>
+              <div className="text-[17px] font-bold leading-none tracking-tight text-[#17233D]">
+                Campus<span className="text-[#6546D9]">Loop</span>
+              </div>
+              <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8A8F9D]">
+                Campus marketplace
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-sm text-[#687086]">Your campus, in one loop.</p>
         </div>
+
         <button
           aria-label="Notifications"
           className="h-10 w-10 shrink-0 rounded-full border border-[#E3E5EA] bg-white flex items-center justify-center hover:bg-[#F6F7F9] transition-colors"
