@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Heart, MapPin, BadgeCheck, Star } from "lucide-react";
 import Link from "next/link";
+import { Heart, BadgeCheck, Star } from "lucide-react";
 import { Item } from "@/lib/types";
 
 interface ItemCardProps {
@@ -14,67 +14,55 @@ export function ItemCard({ item }: ItemCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   return (
-    <Link
-  href={`/marketplace/${item.id}`}
-  className="block overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow"
->
-      {/* Image with badges */}
-      <div className="relative w-full h-36 bg-gray-100">
+    <Link href={`/marketplace/${item.id}`} className="group block">
+      <div className="relative aspect-[4/4.25] overflow-hidden rounded-[18px] bg-[#F0F1F4]">
         <Image
           src={item.imageUrl}
           alt={item.title}
           fill
-          className="object-cover"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.035]"
         />
 
-        {/* Category badge - top left */}
-        <span className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-medium px-2 py-1 rounded-full">
-          {item.categoryLabel}
-        </span>
-
-        {/* Price badge - top right */}
-        <span className="absolute top-2 right-2 bg-[#6759FF] text-white text-xs font-bold px-2.5 py-1 rounded-full">
-          ₹{item.price}
-        </span>
-
-        {/* Wishlist heart - bottom right of image */}
         <button
           onClick={(e) => {
-  e.preventDefault();
-  setIsWishlisted(!isWishlisted);
-}}
-          className="absolute bottom-2 right-2 bg-white/90 p-1.5 rounded-full"
+            e.preventDefault();
+            setIsWishlisted((value) => !value);
+          }}
+          aria-label="Add to wishlist"
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-[0_2px_12px_rgba(23,35,61,0.12)]"
         >
           <Heart
-            size={14}
-            className={isWishlisted ? "fill-red-500 text-red-500" : "text-gray-500"}
+            size={16}
+            strokeWidth={2}
+            className={isWishlisted ? "fill-[#E5484D] text-[#E5484D]" : "text-[#17233D]"}
           />
         </button>
+
+        <span className="absolute left-3 bottom-3 rounded-md bg-[#17233D] px-2.5 py-1 text-[10px] font-bold tracking-wide text-white">
+          {item.categoryLabel}
+        </span>
       </div>
 
-      {/* Details */}
-      <div className="p-3">
-        <h3 className="font-semibold text-sm text-gray-900 line-clamp-1">
-          {item.title}
-        </h3>
-
-        <div className="flex items-center gap-1 mt-1">
-          <MapPin size={11} className="text-gray-400 shrink-0" />
-          <p className="text-[11px] text-gray-500 line-clamp-1">{item.location}</p>
+      <div className="pt-3 px-0.5">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-w-0 text-[13px] font-bold leading-[18px] text-[#17233D] line-clamp-2">
+            {item.title}
+          </h3>
+          <span className="shrink-0 text-[14px] font-extrabold tracking-tight text-[#6546D9]">
+            ₹{item.price}
+          </span>
         </div>
 
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-700 font-medium">{item.sellerName}</span>
-            <Star size={11} className="fill-amber-400 text-amber-400" />
-            <span className="text-[11px] text-gray-500">{item.sellerRating}</span>
-          </div>
+        <p className="mt-1 text-[11px] font-medium text-[#7B8394]">{item.condition}</p>
 
-          {item.sellerVerified && (
-            <BadgeCheck size={15} className="text-green-500 shrink-0" />
-          )}
+        <div className="mt-2.5 flex items-center gap-1.5 text-[11px] font-medium text-[#697286]">
+          <span className="truncate">{item.sellerName}</span>
+          {item.sellerVerified && <BadgeCheck size={13} className="shrink-0 text-[#6546D9]" />}
+          <span className="text-[#C8CCD4]">·</span>
+          <Star size={11} className="shrink-0 fill-[#F2B01E] text-[#F2B01E]" />
+          <span className="shrink-0">{item.sellerRating}</span>
         </div>
       </div>
-</Link>
+    </Link>
   );
 }

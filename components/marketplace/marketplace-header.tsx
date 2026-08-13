@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Bell } from "lucide-react";
 
 const categories = [
-  { id: "all", label: "All" },
+  { id: "all", label: "Everything" },
   { id: "books", label: "Books" },
   { id: "electronics", label: "Electronics" },
-  { id: "clothing", label: "Clothing" },
+  { id: "clothing", label: "Fashion" },
   { id: "stationery", label: "Stationery" },
 ];
 
@@ -25,51 +24,68 @@ export function MarketplaceHeader({
   onSearchChange,
 }: MarketplaceHeaderProps) {
   return (
-    <div className="sticky top-0 z-10 bg-white pb-3 pt-4 px-4 border-b border-gray-100">
-      {/* App name row */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-lg font-bold text-gray-900">Marketplace</h1>
-          <p className="text-xs text-gray-400">CampusLoop</p>
+    <header className="px-5 pt-5 pb-4 border-b border-[#E8E9EE]">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5">
+            <img src="/campusloop-mark.svg" alt="" className="h-10 w-[72px] object-contain object-left" />
+            <div>
+              <div className="text-[17px] font-bold leading-none tracking-tight text-[#17233D]">
+                Campus<span className="text-[#6546D9]">Loop</span>
+              </div>
+              <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8A8F9D]">
+                Campus marketplace
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-sm text-[#687086]">Your campus, in one loop.</p>
         </div>
+
+        <button
+          aria-label="Notifications"
+          className="h-10 w-10 shrink-0 rounded-full border border-[#E3E5EA] bg-white flex items-center justify-center hover:bg-[#F6F7F9] transition-colors"
+        >
+          <Bell size={18} className="text-[#17233D]" />
+        </button>
       </div>
 
-      {/* Search bar */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex-1 flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
-          <Search size={18} className="text-gray-400 shrink-0" />
+      <div className="mt-5 flex gap-2">
+        <div className="flex h-12 flex-1 items-center gap-3 rounded-xl border border-[#DDE0E7] bg-[#F8F9FB] px-4 focus-within:border-[#6546D9] focus-within:bg-white transition-colors">
+          <Search size={18} className="shrink-0 text-[#8991A3]" />
           <input
             type="text"
-            placeholder="Search books, gadgets, clothes..."
+            placeholder="Search books, gadgets, notes..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="bg-transparent outline-none text-sm w-full text-gray-900 placeholder:text-gray-400"
+            className="w-full bg-transparent text-sm text-[#17233D] outline-none placeholder:text-[#8991A3]"
           />
         </div>
-        <button className="bg-[#6759FF] p-2.5 rounded-xl shrink-0">
+        <button
+          aria-label="Filters"
+          className="h-12 w-12 shrink-0 rounded-xl bg-[#17233D] flex items-center justify-center hover:bg-[#243451] transition-colors"
+        >
           <SlidersHorizontal size={18} className="text-white" />
         </button>
       </div>
 
-      {/* Category pills */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
-        {categories.map((cat) => {
-          const isActive = activeCategory === cat.id;
+      <div className="mt-4 flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
+        {categories.map((category) => {
+          const active = activeCategory === category.id;
           return (
             <button
-              key={cat.id}
-              onClick={() => onCategoryChange(cat.id)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                isActive
-                  ? "bg-[#6759FF] text-white border-[#6759FF]"
-                  : "bg-white text-gray-600 border-gray-200"
-              }`}
+              key={category.id}
+              onClick={() => onCategoryChange(category.id)}
+              className={`shrink-0 border px-4 h-9 text-sm font-medium transition-colors ${
+                active
+                  ? "border-[#17233D] bg-[#17233D] text-white"
+                  : "border-[#DDE0E7] bg-white text-[#596176] hover:bg-[#F6F7F9]"
+              } rounded-lg`}
             >
-              {cat.label}
+              {category.label}
             </button>
           );
         })}
       </div>
-    </div>
+    </header>
   );
 }
