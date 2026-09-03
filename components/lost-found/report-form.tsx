@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, MapPin, Upload } from "lucide-react";
-import { useState } from "react";
+import Image from "next/image";
+import { ArrowLeft, CheckCircle2, MapPin, Upload, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type ReportType = "lost" | "found";
@@ -11,146 +12,128 @@ interface ReportFormProps {
   type: ReportType;
 }
 
-const categories = [
-  "Electronics",
-  "Documents",
-  "Study",
-  "Personal",
-  "Clothing",
-  "Other",
-];
+const categories = ["Electronics", "Documents", "Study", "Personal", "Clothing", "Other"];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 export function ReportForm({ type }: ReportFormProps) {
   const supabase = createClient();
   const isLost = type === "lost";
-
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState("");
+
+  useEffect(() => {
+    if (!selectedImage) {
+      setImagePreview("");
+      return;
+    }
+    const url = URL.createObjectURL(selectedImage);
+    setImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [selectedImage]);
+
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setErrorMessage("");
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Please select an image file.");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      setErrorMessage("Photo must be 5 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+    setSelectedImage(file);
+  }
+
+  function removeImage() {
+    setSelectedImage(null);
+    setImagePreview("");
+    const input = document.querySelector<HTMLInputElement>('input[name="image"]');
+    if (input) input.value = "";
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     const form = event.currentTarget;
-
     setLoading(true);
     setErrorMessage("");
 
     try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw new Error(userError.message);
+      if (!user) throw new Error("Please log in before submitting a report.");
 
-      if (userError) {
-        throw new Error(userError.message);
-      }
-
-      if (!user) {
-        throw new Error("Please log in before submitting a report.");
-      }
-
-      const title = (
-        form.elements.namedItem("title") as HTMLInputElement
-      ).value.trim();
-
-      const category = (
-        form.elements.namedItem("category") as HTMLSelectElement
-      ).value;
-
-      const date = (
-        form.elements.namedItem("date") as HTMLInputElement
-      ).value;
-
-      const location = (
-        form.elements.namedItem("location") as HTMLInputElement
-      ).value.trim();
-
-      const time = (
-        form.elements.namedItem("time") as HTMLInputElement
-      ).value;
-
-      const area = (
-        form.elements.namedItem("area") as HTMLInputElement
-      ).value.trim();
-
-      const description = (
-        form.elements.namedItem("description") as HTMLTextAreaElement
-      ).value.trim();
+      const title = (form.elements.namedItem("title") as HTMLInputElement).value.trim();
+      const category = (form.elements.namedItem("category") as HTMLSelectElement).value;
+      const date = (form.elements.namedItem("date") as HTMLInputElement).value;
+      const location = (form.elements.namedItem("location") as HTMLInputElement).value.trim();
+      const time = (form.elements.namedItem("time") as HTMLInputElement).value;
+      const area = (form.elements.namedItem("area") as HTMLInputElement).value.trim();
+      const description = (form.elements.namedItem("description") as HTMLTextAreaElement).value.trim();
 
       if (!title || !category || !date || !location || !description) {
         throw new Error("Please fill in all required fields.");
       }
 
-      /*
-       * Make sure a profile exists for the logged-in user.
-       * If it does not exist, create a basic one.
-       */
-      const { data: existingProfile, error: profileCheckError } =
-        await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", user.id)
-          .maybeSingle();
+      const { data: existingProfile, error: profileCheckError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
 
-      if (profileCheckError) {
-        throw new Error(
-          `Profile check failed: ${profileCheckError.message}`
-        );
-      }
+      if (profileCheckError) throw new Error(`Profile check failed: ${profileCheckError.message}`);
 
       if (!existingProfile) {
-        const { error: profileInsertError } = await supabase
-          .from("profiles")
-          .insert({
-            id: user.id,
-            full_name:
-              user.user_metadata?.full_name ??
-              user.email?.split("@")[0] ??
-              "Unnamed Student",
-          });
-
-        if (profileInsertError) {
-          throw new Error(
-            `Could not create your profile: ${profileInsertError.message}`
-          );
-        }
+        const { error: profileInsertError } = await supabase.from("profiles").insert({
+          id: user.id,
+          full_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Unnamed Student",
+        });
+        if (profileInsertError) throw new Error(`Could not create your profile: ${profileInsertError.message}`);
       }
 
-      /*
-       * Create the Lost & Found report.
-       */
-      const { error: insertError } = await supabase
-        .from("lost_found_reports")
-        .insert({
-          reported_by: user.id,
-          title,
-          description,
-          type,
-          category,
-          location,
-          specific_area: area || null,
-          date_reported: date,
-          approximate_time: time || null,
-          image_url: null,
-          status: "active",
+      let imageUrl: string | null = null;
+
+      if (selectedImage) {
+        const extension = selectedImage.name.split(".").pop()?.toLowerCase() || "jpg";
+        const filePath = `${user.id}/${crypto.randomUUID()}.${extension}`;
+
+        const { error: uploadError } = await supabase.storage.from("lost-found").upload(filePath, selectedImage, {
+          cacheControl: "3600",
+          contentType: selectedImage.type,
+          upsert: false,
         });
 
-      if (insertError) {
-        throw new Error(
-          `Could not save report: ${insertError.message}`
-        );
+        if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
+
+        const { data: publicUrlData } = supabase.storage.from("lost-found").getPublicUrl(filePath);
+        imageUrl = publicUrlData.publicUrl;
       }
 
+      const { error: insertError } = await supabase.from("lost_found_reports").insert({
+        reported_by: user.id,
+        title,
+        description,
+        type,
+        category,
+        location,
+        specific_area: area || null,
+        date_reported: date,
+        approximate_time: time || null,
+        image_url: imageUrl,
+        status: "active",
+      });
+
+      if (insertError) throw new Error(`Could not save report: ${insertError.message}`);
       setSubmitted(true);
     } catch (error) {
       console.error("Lost & Found submission error:", error);
-
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong while submitting the report."
-      );
+      setErrorMessage(error instanceof Error ? error.message : "Something went wrong while submitting the report.");
     } finally {
       setLoading(false);
     }
@@ -161,33 +144,12 @@ export function ReportForm({ type }: ReportFormProps) {
       <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
         <div className="mx-auto min-h-screen max-w-[1280px] bg-[#FBF9F4] px-5 py-6 sm:px-8 sm:py-8">
           <div className="mx-auto max-w-2xl">
-            <Link
-              href="/lost-found"
-              className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075] hover:text-[#5141A9]"
-            >
-              <ArrowLeft size={16} />
-              Back to Lost &amp; Found
-            </Link>
-
+            <Link href="/lost-found" className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075] hover:text-[#5141A9]"><ArrowLeft size={16} />Back to Lost &amp; Found</Link>
             <div className="mt-16 rounded-[24px] border border-[#E3DFD7] bg-[#FFFDF9] p-7 text-center shadow-[0_8px_30px_rgba(23,32,68,0.05)] sm:p-10">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#EEE9FF] text-[#5D48D2]">
-                <CheckCircle2 size={27} strokeWidth={1.8} />
-              </div>
-
-              <h1 className="mt-5 text-[25px] font-bold tracking-[-0.045em]">
-                Report submitted
-              </h1>
-
-              <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#6D7184]">
-                Your {type} report has been saved to CampusLoop.
-              </p>
-
-              <Link
-                href="/lost-found"
-                className="mt-6 inline-flex h-11 items-center justify-center rounded-[14px] bg-[#23265B] px-5 text-[12px] font-bold text-white"
-              >
-                View Lost &amp; Found
-              </Link>
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#EEE9FF] text-[#5D48D2]"><CheckCircle2 size={27} strokeWidth={1.8} /></div>
+              <h1 className="mt-5 text-[25px] font-bold tracking-[-0.045em]">Report submitted</h1>
+              <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#6D7184]">Your {type} report has been saved to CampusLoop.</p>
+              <Link href="/lost-found" className="mt-6 inline-flex h-11 items-center justify-center rounded-[14px] bg-[#23265B] px-5 text-[12px] font-bold text-white">View Lost &amp; Found</Link>
             </div>
           </div>
         </div>
@@ -199,233 +161,65 @@ export function ReportForm({ type }: ReportFormProps) {
     <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
       <div className="mx-auto min-h-screen max-w-[1280px] bg-[#FBF9F4] px-5 pb-14 pt-5 sm:px-8 sm:pt-7">
         <div className="mx-auto max-w-3xl">
-          <Link
-            href="/lost-found"
-            className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075] hover:text-[#5141A9]"
-          >
-            <ArrowLeft size={16} />
-            Back to Lost &amp; Found
-          </Link>
-
+          <Link href="/lost-found" className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075] hover:text-[#5141A9]"><ArrowLeft size={16} />Back to Lost &amp; Found</Link>
           <div className="mt-7 border-b border-[#E3DFD7] pb-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6952D7]">
-              Lost &amp; Found
-            </p>
-
-            <h1 className="mt-1 text-[30px] font-bold tracking-[-0.055em] sm:text-[38px]">
-              {isLost
-                ? "Report something you lost."
-                : "Report something you found."}
-            </h1>
-
-            <p className="mt-2 max-w-xl text-[13px] leading-5 text-[#6D7184]">
-              Add the details students need to identify the item and get it
-              back to the right person.
-            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6952D7]">Lost &amp; Found</p>
+            <h1 className="mt-1 text-[30px] font-bold tracking-[-0.055em] sm:text-[38px]">{isLost ? "Report something you lost." : "Report something you found."}</h1>
+            <p className="mt-2 max-w-xl text-[13px] leading-5 text-[#6D7184]">Add the details students need to identify the item and get it back to the right person.</p>
           </div>
 
-          {errorMessage && (
-            <div className="mt-6 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-[12px] leading-5 text-red-700">
-              {errorMessage}
-            </div>
-          )}
+          {errorMessage && <div className="mt-6 rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-[12px] leading-5 text-red-700">{errorMessage}</div>}
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-7">
             <section>
               <h2 className="text-[15px] font-bold">Item details</h2>
-
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <label className="sm:col-span-2">
-                  <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
-                    Item name
-                  </span>
-
-                  <input
-                    required
-                    name="title"
-                    placeholder={
-                      isLost
-                        ? "e.g. Black AirPods case"
-                        : "e.g. Blue water bottle"
-                    }
-                    className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] outline-none transition focus:border-[#8C7BDD]"
-                  />
-                </label>
-
-                <label>
-                  <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
-                    Category
-                  </span>
-
-                  <select
-                    required
-                    name="category"
-                    defaultValue=""
-                    className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] text-[#343A56] outline-none focus:border-[#8C7BDD]"
-                  >
-                    <option value="" disabled>
-                      Select category
-                    </option>
-
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
-                    Date
-                  </span>
-
-                  <input
-                    required
-                    type="date"
-                    name="date"
-                    className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] text-[#343A56] outline-none focus:border-[#8C7BDD]"
-                  />
-                </label>
+                <label className="sm:col-span-2"><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Item name</span><input required name="title" placeholder={isLost ? "e.g. Black AirPods case" : "e.g. Blue water bottle"} className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] outline-none transition focus:border-[#8C7BDD]" /></label>
+                <label><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Category</span><select required name="category" defaultValue="" className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] text-[#343A56] outline-none focus:border-[#8C7BDD]"><option value="" disabled>Select category</option>{categories.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>
+                <label><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Date</span><input required type="date" name="date" className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] text-[#343A56] outline-none focus:border-[#8C7BDD]" /></label>
               </div>
             </section>
 
             <section className="border-t border-[#E8E4DB] pt-7">
-              <h2 className="text-[15px] font-bold">
-                {isLost
-                  ? "Where did you lose it?"
-                  : "Where did you find it?"}
-              </h2>
-
+              <h2 className="text-[15px] font-bold">{isLost ? "Where did you lose it?" : "Where did you find it?"}</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <label className="sm:col-span-2">
-                  <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
-                    Location
-                  </span>
-
-                  <div className="flex h-11 items-center gap-2 rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 focus-within:border-[#8C7BDD]">
-                    <MapPin size={15} className="text-[#858796]" />
-
-                    <input
-                      required
-                      name="location"
-                      placeholder="e.g. Central Library, Block B"
-                      className="w-full bg-transparent text-[13px] outline-none placeholder:text-[#A0A0A8]"
-                    />
-                  </div>
-                </label>
-
-                <label>
-                  <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
-                    Approx. time
-                  </span>
-
-                  <input
-                    type="time"
-                    name="time"
-                    className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] text-[#343A56] outline-none focus:border-[#8C7BDD]"
-                  />
-                </label>
-
-                <label>
-                  <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
-                    Specific area{" "}
-                    <span className="font-medium text-[#9698A3]">
-                      (optional)
-                    </span>
-                  </span>
-
-                  <input
-                    name="area"
-                    placeholder="e.g. 2nd floor, near entrance"
-                    className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] outline-none focus:border-[#8C7BDD]"
-                  />
-                </label>
+                <label className="sm:col-span-2"><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Location</span><div className="flex h-11 items-center gap-2 rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 focus-within:border-[#8C7BDD]"><MapPin size={15} className="text-[#858796]" /><input required name="location" placeholder="e.g. Central Library, Block B" className="w-full bg-transparent text-[13px] outline-none placeholder:text-[#A0A0A8]" /></div></label>
+                <label><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Approx. time</span><input type="time" name="time" className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] text-[#343A56] outline-none focus:border-[#8C7BDD]" /></label>
+                <label><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Specific area <span className="font-medium text-[#9698A3]">(optional)</span></span><input name="area" placeholder="e.g. 2nd floor, near entrance" className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] outline-none focus:border-[#8C7BDD]" /></label>
               </div>
             </section>
 
             <section className="border-t border-[#E8E4DB] pt-7">
               <h2 className="text-[15px] font-bold">Help identify it</h2>
+              <label className="mt-4 block"><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Description</span><textarea required name="description" rows={4} placeholder={isLost ? "Mention colour, brand, case, stickers, marks or anything else that can help someone identify it." : "Mention colour, brand, condition or any details that can help the owner identify it."} className="w-full resize-none rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 py-3 text-[13px] leading-5 outline-none focus:border-[#8C7BDD]" /></label>
 
-              <label className="mt-4 block">
-                <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
-                  Description
-                </span>
-
-                <textarea
-                  required
-                  name="description"
-                  rows={4}
-                  placeholder={
-                    isLost
-                      ? "Mention colour, brand, case, stickers, marks or anything else that can help someone identify it."
-                      : "Mention colour, brand, condition or any details that can help the owner identify it."
-                  }
-                  className="w-full resize-none rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 py-3 text-[13px] leading-5 outline-none focus:border-[#8C7BDD]"
-                />
-              </label>
-
-              <label className="mt-4 flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-[16px] border border-dashed border-[#CFC9E3] bg-[#F7F4FC] px-5 text-center hover:bg-[#F3EFFB]">
-                <Upload size={19} className="text-[#6952D7]" />
-
-                <span className="mt-2 text-[12px] font-bold text-[#343A56]">
-                  Add a photo
-                </span>
-
-                <span className="mt-1 text-[10px] text-[#858796]">
-                  A clear photo makes the item easier to identify.
-                </span>
-
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  className="sr-only"
-                />
-              </label>
+              <div className="mt-4">
+                {imagePreview ? (
+                  <div className="relative overflow-hidden rounded-[16px] border border-[#DCD6EF] bg-[#F7F4FC]">
+                    <div className="relative h-56 w-full"><Image src={imagePreview} alt="Selected report photo preview" fill unoptimized className="object-contain" /></div>
+                    <div className="flex items-center justify-between border-t border-[#E3DDF0] px-4 py-3">
+                      <div className="min-w-0"><p className="truncate text-[11px] font-bold text-[#343A56]">{selectedImage?.name}</p><p className="mt-0.5 text-[9px] text-[#858796]">{selectedImage ? `${(selectedImage.size / 1024 / 1024).toFixed(1)} MB` : ""}</p></div>
+                      <button type="button" onClick={removeImage} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#DEDAD1] bg-[#FFFDF9] text-[#666A7B]" aria-label="Remove photo"><X size={15} /></button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex min-h-32 cursor-pointer flex-col items-center justify-center rounded-[16px] border border-dashed border-[#CFC9E3] bg-[#F7F4FC] px-5 text-center hover:bg-[#F3EFFB]">
+                    <Upload size={19} className="text-[#6952D7]" /><span className="mt-2 text-[12px] font-bold text-[#343A56]">Add a photo</span><span className="mt-1 text-[10px] text-[#858796]">JPG, PNG or other image · max 5 MB</span>
+                    <input type="file" name="image" accept="image/*" onChange={handleImageChange} className="sr-only" />
+                  </label>
+                )}
+              </div>
             </section>
 
             <section className="border-t border-[#E8E4DB] pt-7">
               <h2 className="text-[15px] font-bold">Contact</h2>
-
-              <p className="mt-1 text-[11px] text-[#858796]">
-                Your campus account will be used to connect this report to
-                your account.
-              </p>
-
-              <label className="mt-4 block">
-                <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
-                  Contact note{" "}
-                  <span className="font-medium text-[#9698A3]">
-                    (optional)
-                  </span>
-                </span>
-
-                <input
-                  name="contact"
-                  placeholder="e.g. Message me through CampusLoop"
-                  className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] outline-none focus:border-[#8C7BDD]"
-                />
-              </label>
+              <p className="mt-1 text-[11px] text-[#858796]">Your campus account will be used to connect this report to your account.</p>
+              <label className="mt-4 block"><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Contact note <span className="font-medium text-[#9698A3]">(optional)</span></span><input name="contact" placeholder="e.g. Message me through CampusLoop" className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] outline-none focus:border-[#8C7BDD]" /></label>
             </section>
 
             <div className="flex flex-col-reverse gap-3 border-t border-[#E8E4DB] pt-6 sm:flex-row sm:justify-end">
-              <Link
-                href="/lost-found"
-                className="flex h-11 items-center justify-center rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-5 text-[12px] font-bold text-[#4F5366]"
-              >
-                Cancel
-              </Link>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex h-11 items-center justify-center rounded-[14px] bg-[#23265B] px-6 text-[12px] font-bold text-white hover:bg-[#1D204F] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading
-                  ? "Submitting..."
-                  : `Submit ${isLost ? "lost" : "found"} report`}
-              </button>
+              <Link href="/lost-found" className="flex h-11 items-center justify-center rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-5 text-[12px] font-bold text-[#4F5366]">Cancel</Link>
+              <button type="submit" disabled={loading} className="flex h-11 items-center justify-center rounded-[14px] bg-[#23265B] px-6 text-[12px] font-bold text-white hover:bg-[#1D204F] disabled:cursor-not-allowed disabled:opacity-60">{loading ? selectedImage ? "Uploading photo..." : "Submitting..." : `Submit ${isLost ? "lost" : "found"} report`}</button>
             </div>
           </form>
         </div>
