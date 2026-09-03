@@ -1,68 +1,342 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { ArrowLeft, Check, ShieldCheck } from "lucide-react";
-import { useState } from "react";
-
-const reports: Record<string, { title: string; type: "lost" | "found" }> = {
-  "1": { title: "Black AirPods case", type: "lost" },
-  "2": { title: "Blue water bottle", type: "found" },
-  "3": { title: "Student ID card", type: "lost" },
-  "4": { title: "Scientific calculator", type: "found" },
-  "5": { title: "Grey hoodie", type: "lost" },
-  "6": { title: "USB drive", type: "found" },
-};
+import { ArrowLeft, CheckCircle2, ShieldCheck, LogIn } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ClaimPage() {
-  const { id } = useParams<{ id: string }>();
-  const report = reports[id];
+  const params = useParams();
+  const router = useRouter();
+  const id = params?.id as string;
+
+  const [details, setDetails] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  if (!report) return null;
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const supabase = createClient();
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        setIsLoggedIn(!!user);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setIsLoggedIn(false);
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+
+    checkAuth();
+  }, []);
+
+  function handleLogin() {
+    router.push(`/login?redirect=/lost-found/${id}/claim`);
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!details.trim()) {
+      setErrorMessage("Please enter some identifying details.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const supabase = createClient();
+
+      // Get current user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        throw new Error(userError.message);
+      }
+
+      if (!user) {
+        setIsLoggedIn(false);
+        throw new Error("Please log in before submitting a claim.");
+      }
+
+      // Check report
+      const { data: report, error: reportError } = await supabase
+        .from("lost_found_reports")
+        .select("id, status")
+        .eq("id", id)
+        .single();
+
+      if (reportError || !report) {
+        throw new Error(
+          "This Lost & Found report could not be found."
+        );
+      }
+
+      if (report.status !== "active") {
+        throw new Error(
+          "This item is no longer available for new claims."
+        );
+      }
+
+      // Submit claim
+      const { error: claimError } = await supabase
+        .from("lost_found_claims")
+        .insert({
+          report_id: id,
+          claimant_id: user.id,
+          identifying_details: details.trim(),
+          status: "pending",
+        });
+
+      if (claimError) {
+        if (claimError.code === "23505") {
+          throw new Error(
+            "You have already submitted a claim for this item."
+          );
+        }
+
+        throw new Error(claimError.message);
+      }
+
+      setSubmitted(true);
+    } catch (error) {
+      console.error("Claim submission error:", error);
+
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while submitting your claim."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // -------------------------
+  // SUCCESS
+  // -------------------------
 
   if (submitted) {
     return (
-      <main className="min-h-screen bg-[#EEECE5] px-4 py-5 text-[#172044]">
-        <div className="mx-auto min-h-[calc(100vh-40px)] max-w-[520px] rounded-[28px] bg-[#FBF9F4] p-5 sm:p-8">
-          <Link href={`/lost-found/${id}`} className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#555C70]"><ArrowLeft size={16} /> Back to report</Link>
-          <div className="mt-16 rounded-[22px] border border-[#E3DFD7] bg-[#FFFDF9] p-7 text-center sm:p-9">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#E5F1EA] text-[#32704F]"><Check size={25} /></div>
-            <h1 className="mt-5 text-[25px] font-extrabold tracking-[-0.04em]">Request sent</h1>
-            <p className="mt-2 text-[13px] leading-5 text-[#707587]">Your request for <span className="font-bold text-[#30364E]">{report.title}</span> has been recorded. The other student can verify the details before arranging the handover.</p>
-            <Link href="/lost-found" className="mt-6 flex h-11 items-center justify-center rounded-[14px] bg-[#23265B] text-[12px] font-extrabold text-white">Back to Lost &amp; Found</Link>
+      <main className="min-h-screen bg-[#4E3439] text-[#172044]">
+        <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] px-5 py-7 sm:px-8">
+          <div className="mx-auto max-w-2xl">
+            <Link
+              href="/lost-found"
+              className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075] hover:text-[#5141A9]"
+            >
+              <ArrowLeft size={16} />
+              Back to Lost &amp; Found
+            </Link>
+
+            <div className="mt-16 rounded-[24px] border border-[#E3DFD7] bg-[#FFFDF9] p-8 text-center shadow-[0_8px_30px_rgba(23,32,68,0.05)] sm:p-10">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#E4F5EA] text-[#287A47]">
+                <CheckCircle2 size={27} />
+              </div>
+
+              <h1 className="mt-5 text-[26px] font-bold tracking-[-0.04em]">
+                Claim submitted
+              </h1>
+
+              <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#6D7184]">
+                Your claim has been submitted to the person who reported this
+                item. They can review your identifying details and continue
+                the verification process.
+              </p>
+
+              <Link
+                href={`/lost-found/${id}`}
+                className="mt-7 inline-flex h-11 items-center justify-center rounded-[14px] bg-[#23265B] px-6 text-[12px] font-bold text-white no-underline"
+              >
+                Back to item
+              </Link>
+            </div>
           </div>
         </div>
       </main>
     );
   }
 
+  // -------------------------
+  // LOADING AUTH
+  // -------------------------
+
+  if (checkingAuth) {
+    return (
+      <main className="min-h-screen bg-[#4E3439] text-[#172044]">
+        <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] px-5 py-7 sm:px-8">
+          <div className="mx-auto max-w-2xl">
+            <div className="mt-20 rounded-[24px] border border-[#E3DFD7] bg-[#FFFDF9] p-10 text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[#DDD6FF] border-t-[#5D48D2]" />
+
+              <p className="mt-4 text-[13px] font-medium text-[#6D7184]">
+                Checking your account...
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // -------------------------
+  // MAIN PAGE
+  // -------------------------
+
   return (
-    <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
-      <div className="mx-auto min-h-screen max-w-[1280px] bg-[#FBF9F4] px-5 py-5 sm:px-8 sm:py-7">
-        <div className="mx-auto max-w-xl">
-          <Link href={`/lost-found/${id}`} className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#555C70]"><ArrowLeft size={16} /> Back to item</Link>
+    <main className="min-h-screen bg-[#4E3439] text-[#172044]">
+      <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] px-5 pb-12 pt-6 sm:px-8">
+        <div className="mx-auto max-w-2xl">
 
-          <div className="mt-7">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#6952D7]">{report.type === "lost" ? "Found something?" : "Claim an item"}</p>
-            <h1 className="mt-2 text-[30px] font-extrabold leading-[1.08] tracking-[-0.055em]">{report.type === "lost" ? "Help return it to its owner." : "Tell us why it is yours."}</h1>
-            <p className="mt-2.5 text-[13px] leading-5 text-[#6D7184]">{report.type === "lost" ? "A few details help the owner confirm you have the right item." : "Give the finder enough information to verify that you are the owner."}</p>
+          {/* BACK */}
+          <Link
+            href={`/lost-found/${id}`}
+            className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075] hover:text-[#5141A9]"
+          >
+            <ArrowLeft size={16} />
+            Back to item
+          </Link>
+
+          {/* HEADER */}
+          <div className="mt-8">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6952D7]">
+              Lost &amp; Found
+            </p>
+
+            <h1 className="mt-2 text-[32px] font-bold tracking-[-0.05em] text-[#172044] sm:text-[38px]">
+              Claim this item
+            </h1>
+
+            <p className="mt-2 max-w-xl text-[13px] leading-5 text-[#6D7184]">
+              Tell the person who reported this item something only the real
+              owner would know.
+            </p>
           </div>
 
-          <div className="mt-6 rounded-[18px] border border-[#E3DFD7] bg-[#FFFDF9] p-4">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.13em] text-[#8A8D99]">Item</p>
-            <p className="mt-1 text-[14px] font-extrabold text-[#252B43]">{report.title}</p>
+          {/* CARD */}
+          <div className="mt-7 rounded-[24px] border border-[#E3DFD7] bg-[#FFFDF9] p-6 shadow-[0_8px_30px_rgba(23,32,68,0.05)] sm:p-8">
+
+            {/* VERIFICATION INFO */}
+            <div className="rounded-[18px] border border-[#DDD6FF] bg-[#F6F3FF] p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#E9E3FF] text-[#5D48D2]">
+                  <ShieldCheck size={19} />
+                </div>
+
+                <div>
+                  <h2 className="text-[13px] font-bold text-[#172044]">
+                    Verification required
+                  </h2>
+
+                  <p className="mt-1 text-[11px] leading-5 text-[#68708A]">
+                    Don&apos;t reveal sensitive information. Give identifying
+                    details that can help the reporter verify that the item
+                    belongs to you.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* NOT LOGGED IN */}
+            {!isLoggedIn ? (
+              <div className="mt-6 rounded-[18px] border border-[#E3DFD7] bg-[#FAF8F2] p-6 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#EEE9FF] text-[#5D48D2]">
+                  <LogIn size={21} />
+                </div>
+
+                <h2 className="mt-4 text-[16px] font-bold text-[#172044]">
+                  Log in to claim this item
+                </h2>
+
+                <p className="mx-auto mt-2 max-w-sm text-[12px] leading-5 text-[#6D7184]">
+                  You need a CampusLoop account to submit a claim. Your claim
+                  will be linked to your campus account.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleLogin}
+                  className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-[14px] bg-[#23265B] px-6 text-[13px] font-bold text-white transition hover:bg-[#1D204F]"
+                >
+                  <LogIn size={16} />
+                  Log in to CampusLoop
+                </button>
+
+                <p className="mt-3 text-[11px] text-[#858796]">
+                  After logging in, you&apos;ll return to this claim page.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* ERROR */}
+                {errorMessage && (
+                  <div className="mt-5 rounded-[14px] border border-[#F0C9C9] bg-[#FFF2F2] px-4 py-3">
+                    <p className="text-[12px] font-medium leading-5 text-[#A33A3A]">
+                      {errorMessage}
+                    </p>
+                  </div>
+                )}
+
+                {/* FORM */}
+                <form onSubmit={handleSubmit} className="mt-7">
+
+                  <label className="block">
+                    <span className="mb-2 block text-[11px] font-bold text-[#343A56]">
+                      Identifying details
+                    </span>
+
+                    <textarea
+                      required
+                      value={details}
+                      onChange={(event) => setDetails(event.target.value)}
+                      rows={6}
+                      disabled={loading}
+                      placeholder="For example: mention a sticker, scratch, accessory, contents inside the item, or another detail only the owner would know."
+                      className="w-full resize-none rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 py-3 text-[13px] leading-5 text-[#172044] outline-none placeholder:text-[#A0A0A8] focus:border-[#8C7BDD] disabled:opacity-60"
+                    />
+                  </label>
+
+                  <p className="mt-2 text-[10px] leading-4 text-[#858796]">
+                    These details will be shown to the person who reported the
+                    item.
+                  </p>
+
+                  {/* BUTTONS */}
+                  <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-end">
+
+                    <Link
+                      href={`/lost-found/${id}`}
+                      className="flex h-12 items-center justify-center rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-6 text-[13px] font-semibold text-[#4F5366] no-underline"
+                    >
+                      Cancel
+                    </Link>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex h-12 items-center justify-center rounded-[14px] bg-[#23265B] px-7 text-[13px] font-bold text-white transition hover:bg-[#1D204F] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {loading ? "Submitting..." : "Submit claim"}
+                    </button>
+
+                  </div>
+                </form>
+              </>
+            )}
           </div>
-
-          <form onSubmit={(event) => { event.preventDefault(); setSubmitted(true); }} className="mt-6 space-y-5">
-            <label className="block"><span className="mb-2 block text-[11px] font-bold text-[#343A56]">How can you identify it?</span><textarea required rows={5} placeholder="Mention a detail that isn't obvious from the public report — a mark, sticker, case detail, contents, engraving, etc." className="w-full resize-none rounded-[15px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 py-3 text-[13px] leading-5 outline-none focus:border-[#8C7BDD]" /></label>
-            <label className="block"><span className="mb-2 block text-[11px] font-bold text-[#343A56]">Where should the handover happen?</span><input required placeholder="e.g. Central Library reception" className="h-11 w-full rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5 text-[13px] outline-none focus:border-[#8C7BDD]" /></label>
-            <label className="flex items-start gap-3 rounded-[16px] border border-[#E4DFD5] bg-[#F7F4EC] p-4"><input required type="checkbox" className="mt-0.5 h-4 w-4 accent-[#23265B]" /><span className="text-[11px] leading-5 text-[#626879]">I confirm the information I provided is accurate and understand that the other student may ask for additional proof before handing over the item.</span></label>
-
-            <div className="flex gap-2 border-t border-[#E4E0D8] pt-5"><Link href={`/lost-found/${id}`} className="flex h-11 flex-1 items-center justify-center rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] text-[12px] font-bold text-[#555B6D]">Cancel</Link><button type="submit" className="flex h-11 flex-[1.5] items-center justify-center gap-2 rounded-[14px] bg-[#23265B] text-[12px] font-extrabold text-white">Send request</button></div>
-          </form>
-
-          <div className="mt-6 flex gap-2.5 rounded-[16px] border border-[#E1DDD4] bg-[#F7F4EC] p-3.5"><ShieldCheck size={17} className="mt-0.5 shrink-0 text-[#5D48D2]" /><p className="text-[10px] leading-5 text-[#74798A]">CampusLoop does not expose private contact details on the report. Keep the handover on campus and verify the item first.</p></div>
         </div>
       </div>
     </main>

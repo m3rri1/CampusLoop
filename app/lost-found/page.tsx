@@ -1,140 +1,372 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { Bell, ChevronDown, ChevronRight, MapPin, Plus, Search, SlidersHorizontal, X } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import { Bell, MapPin, Search, Plus, ChevronRight } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
-const reports = [
-  { id: "1", type: "lost", title: "Black AirPods case", category: "Electronics", location: "Central Library", time: "2h ago", image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=700&q=85" },
-  { id: "2", type: "found", title: "Blue water bottle", category: "Personal", location: "Sports Complex", time: "5h ago", image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=700&q=85" },
-  { id: "3", type: "lost", title: "Student ID card", category: "Documents", location: "Block B", time: "Yesterday", image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=700&q=85" },
-  { id: "4", type: "found", title: "Scientific calculator", category: "Study", location: "Engineering Lab", time: "Yesterday", image: "https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=700&q=85" },
-  { id: "5", type: "lost", title: "Grey hoodie", category: "Clothing", location: "Cafeteria", time: "2 days ago", image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=700&q=85" },
-  { id: "6", type: "found", title: "USB drive", category: "Electronics", location: "CS Department", time: "2 days ago", image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=700&q=85" },
+type Report = {
+  id: string;
+  title: string;
+  description: string | null;
+  type: "lost" | "found";
+  category: string;
+  location: string;
+  specific_area: string | null;
+  date_reported: string;
+  approximate_time: string | null;
+  image_url: string | null;
+  status: string;
+  created_at: string;
+};
+
+const categories = [
+  "All",
+  "Electronics",
+  "Documents",
+  "Study",
+  "Personal",
+  "Clothing",
 ];
 
-const categories = ["All", "Electronics", "Documents", "Study", "Personal", "Clothing"];
-const cardTints = ["#E4E8D8", "#E7E0F4", "#F1E6D7", "#E1E9E3", "#E9E2EF", "#E9E7D7"];
-
 export default function LostFoundPage() {
-  const [mode, setMode] = useState<"all" | "lost" | "found">("all");
+  const supabase = createClient();
+
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
-  const [query, setQuery] = useState("");
-  const [reportMenuOpen, setReportMenuOpen] = useState(false);
+  const [type, setType] = useState<"all" | "lost" | "found">("all");
+
+useEffect(() => {
+  console.log("🔥 LOST FOUND EFFECT STARTED");
+
+  const timer = setTimeout(() => {
+    console.log("🔥 TIMER FIRED");
+
+    setLoading(false);
+    setError("TEST: React loading state is working.");
+  }, 3000);
+
+  return () => {
+    clearTimeout(timer);
+  };
+}, []);
 
   const filteredReports = useMemo(() => {
-    const search = query.trim().toLowerCase();
-    return reports.filter((report) => {
-      const matchesMode = mode === "all" || report.type === mode;
-      const matchesCategory = category === "All" || report.category === category;
-      const matchesSearch = !search || `${report.title} ${report.category} ${report.location}`.toLowerCase().includes(search);
-      return matchesMode && matchesCategory && matchesSearch;
+    const query = search.trim().toLowerCase();
+
+    return reports.filter((item) => {
+      const matchesCategory =
+        category === "All" || item.category === category;
+
+      const matchesType =
+        type === "all" || item.type === type;
+
+      const matchesSearch =
+        !query ||
+        item.title.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        item.location.toLowerCase().includes(query) ||
+        (item.description ?? "").toLowerCase().includes(query);
+
+      return matchesCategory && matchesType && matchesSearch;
     });
-  }, [mode, category, query]);
+  }, [reports, search, category, type]);
+
+  function formatTime(date: string) {
+    const created = new Date(date);
+    const now = new Date();
+
+    const seconds = Math.floor(
+      (now.getTime() - created.getTime()) / 1000
+    );
+
+    if (seconds < 60) return "Just now";
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+
+    const months = Math.floor(days / 30);
+    if (months < 12) return `${months}mo ago`;
+
+    return `${Math.floor(months / 12)}y ago`;
+  }
 
   return (
-    <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
-      <div className="mx-auto min-h-screen max-w-[1280px] bg-[#FBF9F4] shadow-[0_0_0_1px_rgba(23,32,68,0.03)]">
-        <header className="px-5 pb-0 pt-4 sm:px-8 sm:pt-7">
-          <div className="flex items-center justify-between border-b border-[#E5E1D8] pb-4 sm:pb-5">
-            <Link href="/marketplace" className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[13px] bg-[#F0EBFF] sm:h-11 sm:w-11">
-                <span className="absolute -left-2 -top-3 h-8 w-8 rounded-full bg-[#6C55D9]/20" />
-                <span className="relative text-[16px] font-extrabold tracking-[-0.09em] text-[#5D48D2]">CL</span>
+    <main className="min-h-screen bg-[#4E3439] text-[#172044]">
+      <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] px-5 pb-24 pt-5 sm:px-8">
+        <div className="mx-auto max-w-5xl">
+
+          {/* HEADER */}
+          <header className="flex items-center justify-between border-b border-[#E5E1D8] pb-4">
+            <Link href="/" className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#EEE9FF] text-[13px] font-bold text-[#5D48D2]">
+                CL
               </div>
+
               <div>
-                <span className="block text-[16px] font-bold tracking-[-0.04em] text-[#172044]">Campus<span className="text-[#6952D7]">Loop</span></span>
-                <span className="mt-0.5 block text-[8px] font-bold uppercase tracking-[0.18em] text-[#85879A]">Lost &amp; Found</span>
+                <div className="text-[15px] font-bold tracking-[-0.02em]">
+                  CampusLoop
+                </div>
+
+                <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.2em] text-[#77798B]">
+                  Lost &amp; Found
+                </div>
               </div>
             </Link>
-            <button aria-label="Notifications" className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E2DED4] bg-[#FFFDF9] text-[#303756] sm:h-10 sm:w-10">
-              <Bell size={17} strokeWidth={1.8} />
+
+            <button
+              type="button"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E1DDD4] bg-[#FFFDF9]"
+            >
+              <Bell size={16} strokeWidth={1.6} />
             </button>
+          </header>
+
+          {/* INTRO */}
+          <section className="pt-6">
+            <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[#6952D7]">
+              Lost &amp; Found
+            </p>
+
+            <h1 className="mt-2 text-[28px] font-bold tracking-[-0.055em] sm:text-[36px]">
+              Find it. Return it.
+            </h1>
+
+            <p className="mt-2 text-[12px] leading-5 text-[#6D7184]">
+              Find things reported lost or found around your campus.
+            </p>
+          </section>
+
+          {/* SEARCH */}
+          <div className="mt-5 flex h-11 items-center gap-3 rounded-[14px] border border-[#DEDAD1] bg-[#FFFDF9] px-3.5">
+            <Search size={16} className="shrink-0 text-[#858796]" />
+
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search items, places or categories"
+              className="w-full bg-transparent text-[12px] text-[#172044] outline-none placeholder:text-[#999AA5]"
+            />
           </div>
 
-          <div className="mt-5 sm:mt-8">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#6952D7]">Lost &amp; Found</p>
-                <h1 className="mt-0.5 text-[27px] font-bold tracking-[-0.055em] text-[#172044] sm:text-[38px]">Find it. Return it.</h1>
-                <p className="mt-1 text-[12px] font-medium text-[#6D7184] sm:text-[13px]">Find things reported lost or found around your campus.</p>
-              </div>
-              <div className="hidden shrink-0 gap-2 sm:flex">
-                <Link href="/lost-found/report-lost" className="flex h-10 items-center gap-2 rounded-[14px] bg-[#23265B] px-4 text-[11px] font-semibold text-white"><Plus size={15} /> Report lost</Link>
-                <Link href="/lost-found/report-found" className="flex h-10 items-center gap-2 rounded-[14px] border border-[#E2DED5] bg-[#FFFDF9] px-4 text-[11px] font-semibold text-[#303756]"><Plus size={15} /> Report found</Link>
-              </div>
-            </div>
+          {/* CATEGORIES */}
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {categories.map((item) => {
+              const active = category === item;
 
-            <div className="mt-4 flex h-11 items-center gap-2.5 rounded-[15px] border border-[#E1DDD4] bg-[#FFFDF9] px-3.5 shadow-[0_3px_14px_rgba(23,32,68,0.035)] focus-within:border-[#B8ACE4] sm:mt-6 sm:h-12 sm:gap-3 sm:px-4">
-              <Search size={17} className="shrink-0 text-[#8A8C9A]" strokeWidth={1.8} />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search items, places or categories" className="w-full bg-transparent text-[12px] font-medium text-[#172044] outline-none placeholder:text-[#9B9CA6] sm:text-[13px]" />
-              <button aria-label="Filters" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[#F0ECFA] text-[#5E50A1]"><SlidersHorizontal size={15} strokeWidth={1.8} /></button>
-            </div>
-
-            <nav className="mt-3 flex gap-1.5 overflow-x-auto no-scrollbar sm:mt-5 sm:gap-2">
-              {categories.map((item) => (
-                <button key={item} onClick={() => setCategory(item)} className={`flex h-8 shrink-0 items-center rounded-full border px-3.5 text-[11px] font-semibold transition-colors sm:h-9 sm:px-4 sm:text-[12px] ${category === item ? "border-[#D8CCF4] bg-[#F0EBFF] text-[#5944C7]" : "border-[#E3DFD6] bg-[#FFFDF9] text-[#6F7280] hover:bg-white"}`}>
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setCategory(item)}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-[10px] font-semibold transition ${
+                    active
+                      ? "border-[#DDD3FF] bg-[#EEE9FF] text-[#5D48D2]"
+                      : "border-[#E1DDD4] bg-[#FFFDF9] text-[#5B6072]"
+                  }`}
+                >
                   {item}
                 </button>
-              ))}
-            </nav>
+              );
+            })}
           </div>
-        </header>
 
-        <section className="px-5 pb-16 pt-5 sm:px-8 sm:pb-16 sm:pt-8">
-          <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
-            <div className="flex items-center gap-0.5 rounded-full border border-[#E2DED5] bg-[#FFFDF9] p-1">
-              {(["all", "lost", "found"] as const).map((item) => (
-                <button key={item} onClick={() => setMode(item)} className={`rounded-full px-3.5 py-1.5 text-[10px] font-semibold capitalize transition-colors sm:px-4 sm:py-2 sm:text-[11px] ${mode === item ? "bg-[#23265B] text-white" : "text-[#6F7280]"}`}>
-                  {item === "all" ? "All items" : item}
+          {/* LOST / FOUND FILTER */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex rounded-full border border-[#E1DDD4] bg-[#FFFDF9] p-1">
+              {[
+                ["all", "All Items"],
+                ["lost", "Lost"],
+                ["found", "Found"],
+              ].map(([value, label]) => {
+                const active = type === value;
+
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      setType(value as "all" | "lost" | "found")
+                    }
+                    className={`rounded-full px-4 py-1.5 text-[10px] font-semibold transition ${
+                      active
+                        ? "bg-[#292B68] text-white"
+                        : "text-[#555A6D]"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <span className="text-[10px] text-[#858796]">
+              {loading ? "Loading..." : `${filteredReports.length} reports`}
+            </span>
+          </div>
+
+          {/* CONTENT */}
+          <section className="mt-5">
+
+            {/* LOADING */}
+            {loading && (
+              <div className="flex min-h-[260px] items-center justify-center rounded-[20px] border border-[#E3DFD7] bg-[#FFFDF9]">
+                <div className="text-center">
+                  <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[#DDD7F7] border-t-[#5D48D2]" />
+                  <p className="mt-4 text-[12px] font-semibold text-[#172044]">
+                    Loading reports...
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ERROR */}
+            {!loading && error && (
+              <div className="rounded-[20px] border border-[#F0CACA] bg-[#FFF4F4] p-6">
+                <p className="text-[13px] font-bold text-[#9F3939]">
+                  Could not load reports
+                </p>
+
+                <p className="mt-2 break-words text-[11px] leading-5 text-[#A85B5B]">
+                  {error}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-4 rounded-[12px] bg-[#292B68] px-4 py-2 text-[11px] font-bold text-white"
+                >
+                  Try again
                 </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-medium text-[#858796] sm:text-[11px]">{filteredReports.length} reports</span>
-              <button className="hidden items-center gap-1.5 rounded-full border border-[#E2DED5] bg-[#FFFDF9] px-3.5 py-2 text-[11px] font-semibold text-[#4F5366] sm:flex">Newest <ChevronDown size={14} /></button>
-            </div>
-          </div>
+              </div>
+            )}
 
-          {filteredReports.length === 0 ? (
-            <div className="rounded-[20px] border border-dashed border-[#D3CFC6] bg-white/60 py-20 text-center"><p className="text-sm font-semibold">No reports found</p><p className="mt-1 text-xs text-[#898781]">Try another search or category.</p></div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
-              {filteredReports.map((report, index) => (
-                <Link key={report.id} href={`/lost-found/${report.id}`} className="group min-w-0">
-                  <article className="overflow-hidden rounded-[18px] border border-[#E3DFD7] bg-[#FFFDF9] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(23,32,68,0.07)] sm:rounded-[22px]">
-                    <div className="relative aspect-[1/0.93] overflow-hidden" style={{ backgroundColor: cardTints[index % cardTints.length] }}>
-                      <Image src={report.image} alt={report.title} fill sizes="(max-width: 640px) 44vw, (max-width: 1024px) 30vw, 220px" className="object-cover transition-transform duration-500 group-hover:scale-[1.035]" />
-                      <span className="absolute left-2.5 top-2.5 rounded-full bg-[#FFFDF9]/95 px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.08em] text-[#5141A9] shadow-[0_2px_9px_rgba(23,32,68,0.07)] sm:left-3 sm:top-3 sm:px-2.5 sm:py-1 sm:text-[9px]">{report.type}</span>
-                    </div>
-                    <div className="px-3 pb-3 pt-2.5 sm:px-3.5 sm:pb-4 sm:pt-3">
-                      <div className="flex items-start justify-between gap-1.5">
-                        <div className="min-w-0"><h2 className="line-clamp-2 text-[11px] font-bold leading-[15px] tracking-[-0.01em] text-[#202540] sm:text-[13px] sm:leading-[17px]">{report.title}</h2><p className="mt-0.5 text-[9px] font-medium text-[#7E8190] sm:mt-1 sm:text-[10px]">{report.category}</p></div>
-                        <ChevronRight size={13} className="mt-0.5 shrink-0 text-[#9A98A7] sm:h-[15px] sm:w-[15px]" />
-                      </div>
-                      <div className="mt-2.5 flex items-center justify-between gap-1.5 border-t border-[#EEEAF4] pt-2.5 text-[8px] font-medium text-[#7E8190] sm:mt-3 sm:pt-3 sm:text-[9px]">
-                        <span className="flex min-w-0 items-center gap-1 truncate"><MapPin size={9} /> {report.location}</span><span className="shrink-0">{report.time}</span>
-                      </div>
-                    </div>
-                  </article>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+            {/* EMPTY */}
+            {!loading && !error && filteredReports.length === 0 && (
+              <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[20px] border border-[#E3DFD7] bg-[#FFFDF9] px-6 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[15px] bg-[#EEE9FF] text-[#5D48D2]">
+                  <Search size={19} />
+                </div>
 
-        <div className="fixed bottom-4 right-4 z-30 sm:hidden">
-          {reportMenuOpen && (
-            <div className="absolute bottom-14 right-0 mb-2 w-40 overflow-hidden rounded-[16px] border border-[#DDD8CE] bg-[#FFFDF9] p-1.5 shadow-[0_12px_30px_rgba(23,32,68,0.16)]">
-              <Link onClick={() => setReportMenuOpen(false)} href="/lost-found/report-lost" className="flex h-10 items-center rounded-[11px] px-3 text-[11px] font-bold text-[#23265B] hover:bg-[#F3F0E9]">Report something lost</Link>
-              <Link onClick={() => setReportMenuOpen(false)} href="/lost-found/report-found" className="flex h-10 items-center rounded-[11px] px-3 text-[11px] font-bold text-[#23265B] hover:bg-[#F3F0E9]">Report something found</Link>
-            </div>
-          )}
-          <button onClick={() => setReportMenuOpen((open) => !open)} aria-label="Report an item" className="flex h-11 items-center gap-2 rounded-full bg-[#23265B] px-4 text-[11px] font-bold text-white shadow-[0_10px_25px_rgba(35,38,91,0.22)]">
-            {reportMenuOpen ? <X size={15} /> : <Plus size={15} />} {reportMenuOpen ? "Close" : "Report item"}
-          </button>
+                <h2 className="mt-4 text-[14px] font-bold">
+                  No reports found
+                </h2>
+
+                <p className="mt-1 max-w-xs text-[11px] leading-5 text-[#858796]">
+                  {reports.length === 0
+                    ? "There are no Lost & Found reports yet."
+                    : "Try changing your search or filters."}
+                </p>
+              </div>
+            )}
+
+            {/* REPORT GRID */}
+            {!loading && !error && filteredReports.length > 0 && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredReports.map((item) => {
+                  const isClaimed = item.status === "claimed";
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={`/lost-found/${item.id}`}
+                      className={`group overflow-hidden rounded-[18px] border border-[#E3DFD7] bg-[#FFFDF9] transition hover:-translate-y-0.5 hover:shadow-[0_10px_30px_rgba(23,32,68,0.08)] ${
+                        isClaimed ? "opacity-60" : ""
+                      }`}
+                    >
+                      {/* IMAGE */}
+                      <div className="relative h-44 w-full bg-[#E9EBDD]">
+                        {item.image_url ? (
+                          <Image
+                            src={item.image_url}
+                            alt={item.title}
+                            fill
+                            unoptimized
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[11px] text-[#72758A]">
+                            No photo
+                          </div>
+                        )}
+
+                        <span
+                          className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[8px] font-bold uppercase tracking-[0.15em] ${
+                            item.type === "lost"
+                              ? "bg-[#EEE9FF] text-[#5D48D2]"
+                              : "bg-[#E5F4E9] text-[#287A47]"
+                          }`}
+                        >
+                          {item.type}
+                        </span>
+
+                        {isClaimed && (
+                          <span className="absolute right-3 top-3 rounded-full bg-[#20223F]/85 px-2.5 py-1 text-[8px] font-bold text-white">
+                            Claimed
+                          </span>
+                        )}
+                      </div>
+
+                      {/* INFO */}
+                      <div className="p-3.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="line-clamp-1 text-[13px] font-bold text-[#172044]">
+                            {item.title}
+                          </h3>
+
+                          <ChevronRight
+                            size={14}
+                            className="shrink-0 text-[#8B8D99] transition group-hover:translate-x-0.5"
+                          />
+                        </div>
+
+                        <p className="mt-1 text-[9px] font-medium text-[#6D7184]">
+                          {item.category}
+                        </p>
+
+                        <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#EEEAE2] pt-3">
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <MapPin
+                              size={11}
+                              className="shrink-0 text-[#858796]"
+                            />
+
+                            <span className="truncate text-[9px] text-[#6D7184]">
+                              {item.location}
+                            </span>
+                          </div>
+
+                          <span className="shrink-0 text-[9px] text-[#858796]">
+                            {formatTime(item.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         </div>
+
+        {/* REPORT BUTTON */}
+        <Link
+          href="/lost-found/report"
+          className="fixed bottom-5 right-5 z-20 flex h-11 items-center gap-2 rounded-full bg-[#292B68] px-5 text-[11px] font-bold text-white shadow-[0_8px_25px_rgba(41,43,104,0.28)] transition hover:bg-[#202252]"
+        >
+          <Plus size={16} />
+          Report item
+        </Link>
       </div>
     </main>
   );

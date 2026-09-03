@@ -1,42 +1,399 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, CheckCircle2, ChevronRight, Clock3, MapPin, QrCode, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  CheckCircle2,
+  MapPin,
+  ShieldCheck,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
-const reports = [
-  { id: "1", type: "lost", title: "Black AirPods case", category: "Electronics", location: "Central Library", time: "2h ago", image: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=900&q=85", description: "Black AirPods case with a small scratch near the hinge. Lost around the library and may have been left near a study table." },
-  { id: "2", type: "found", title: "Blue water bottle", category: "Personal", location: "Sports Complex", time: "5h ago", image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=900&q=85", description: "Blue reusable water bottle found near the sports complex entrance. It was picked up and kept safely." },
-  { id: "3", type: "lost", title: "Student ID card", category: "Documents", location: "Block B", time: "Yesterday", image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=900&q=85", description: "Student ID card misplaced around Block B. Please verify the name and details before handing it over." },
-  { id: "4", type: "found", title: "Scientific calculator", category: "Study", location: "Engineering Lab", time: "Yesterday", image: "https://images.unsplash.com/photo-1587145820266-a5951ee6f620?w=900&q=85", description: "Scientific calculator found in the engineering lab after a class. It is currently being kept safely." },
-  { id: "5", type: "lost", title: "Grey hoodie", category: "Clothing", location: "Cafeteria", time: "2 days ago", image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=900&q=85", description: "Grey hoodie left somewhere around the cafeteria. Look for the specific details mentioned by the owner when claiming it." },
-  { id: "6", type: "found", title: "USB drive", category: "Electronics", location: "CS Department", time: "2 days ago", image: "https://images.unsplash.com/photo-1612815154858-60aa4c59eaa6?w=900&q=85", description: "USB drive found in the CS department. The owner should be able to identify its contents or distinguishing details." },
-];
+type Report = {
+  id: string;
+  title: string;
+  description: string;
+  type: "lost" | "found";
+  category: string;
+  location: string;
+  specific_area: string | null;
+  date_reported: string;
+  approximate_time: string | null;
+  image_url: string | null;
+  status: "active" | "claimed" | "returned";
+  created_at: string;
+};
 
 export default function LostFoundDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const report = reports.find((item) => item.id === id);
-  if (!report) return null;
+  const params = useParams();
+ 
+  const id = params?.id as string;
+
+  const [report, setReport] = useState<Report | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+
+    async function loadReport() {
+      try {
+        const supabase = createClient();
+
+        const { data, error } = await supabase
+          .from("lost_found_reports")
+          .select(
+            `
+              id,
+              title,
+              description,
+              type,
+              category,
+              location,
+              specific_area,
+              date_reported,
+              approximate_time,
+              image_url,
+              status,
+              created_at
+            `
+          )
+          .eq("id", id)
+          .single();
+
+        if (error) {
+          console.error("Lost & Found detail error:", error);
+          setErrorMessage(error.message);
+          setLoading(false);
+          return;
+        }
+
+        setReport(data as Report);
+      } catch (error) {
+        console.error("Unexpected detail page error:", error);
+        setErrorMessage("Something went wrong while loading this report.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadReport();
+  }, [id]);
+
+  function formatDate(date: string) {
+    const parsed = new Date(date);
+
+    if (Number.isNaN(parsed.getTime())) {
+      return date;
+    }
+
+    return parsed.toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
+
+  /* LOADING */
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#4E3439]">
+        <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] px-5 py-7 sm:px-8">
+          <div className="mx-auto max-w-3xl">
+            <Link
+              href="/lost-found"
+              className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075]"
+            >
+              <ArrowLeft size={16} />
+              Back to Lost &amp; Found
+            </Link>
+
+            <div className="mt-7 overflow-hidden rounded-[24px] border border-[#E3DFD7] bg-[#FFFDF9]">
+              <div className="h-[280px] animate-pulse bg-[#E8E9DC]" />
+
+              <div className="space-y-5 p-7">
+                <div className="h-4 w-20 animate-pulse rounded bg-[#E8E4DB]" />
+                <div className="h-9 w-48 animate-pulse rounded bg-[#E8E4DB]" />
+                <div className="h-5 w-28 animate-pulse rounded bg-[#E8E4DB]" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  /* ERROR / NOT FOUND */
+  if (!report) {
+    return (
+      <main className="min-h-screen bg-[#4E3439]">
+        <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] px-5 py-7 sm:px-8">
+          <div className="mx-auto max-w-3xl">
+            <Link
+              href="/lost-found"
+              className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075]"
+            >
+              <ArrowLeft size={16} />
+              Back to Lost &amp; Found
+            </Link>
+
+            <div className="mt-12 rounded-[24px] border border-[#E3DFD7] bg-[#FFFDF9] p-8 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#EEE9FF] text-[#5D48D2]">
+                <CheckCircle2 size={25} />
+              </div>
+
+              <h1 className="mt-5 text-[22px] font-bold text-[#172044]">
+                Report not found
+              </h1>
+
+              <p className="mx-auto mt-2 max-w-md text-[13px] leading-5 text-[#6D7184]">
+                {errorMessage ||
+                  "This Lost & Found report could not be loaded."}
+              </p>
+
+              <Link
+                href="/lost-found"
+                className="mt-6 inline-flex h-11 items-center justify-center rounded-[14px] bg-[#23265B] px-6 text-[12px] font-bold text-white"
+              >
+                Back to Lost &amp; Found
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const isLost = report.type === "lost";
 
+  const isUnavailable =
+    report.status === "claimed" || report.status === "returned";
+
   return (
-    <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
-      <div className="mx-auto min-h-screen max-w-[1280px] bg-[#FBF9F4]">
-        <header className="flex items-center justify-between border-b border-[#E5E1D8] px-5 py-4 sm:px-8">
-          <Link href="/lost-found" className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#555C70]"><ArrowLeft size={16} /> Lost &amp; Found</Link>
-          <span className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.1em] ${isLost ? "bg-[#EEE9FF] text-[#5A45C5]" : "bg-[#E5F1EA] text-[#32704F]"}`}>{report.type}</span>
-        </header>
-        <div className="mx-auto grid max-w-5xl lg:grid-cols-[1.08fr_.92fr] lg:gap-10 lg:px-8 lg:py-8">
-          <div><div className="relative aspect-[1.08/1] overflow-hidden bg-[#E8E4E0] sm:aspect-[1.35/1] lg:rounded-[24px]"><Image src={report.image} alt={report.title} fill priority sizes="(max-width: 1024px) 100vw, 55vw" className="object-cover" /><span className="absolute left-4 top-4 rounded-full bg-[#FFFDF9]/95 px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.1em] text-[#29304B] shadow-sm">{report.category}</span></div></div>
-          <div className="px-5 pb-10 pt-6 sm:px-8 lg:px-0 lg:pt-1">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#6952D7]">Campus lost &amp; found</p>
-            <h1 className="mt-2 text-[30px] font-extrabold leading-[1.08] tracking-[-0.055em] sm:text-[36px]">{report.title}</h1>
-            <div className="mt-5 grid grid-cols-2 gap-2"><div className="rounded-[16px] border border-[#E4E0D8] bg-[#FFFDF9] p-3.5"><MapPin size={16} className="text-[#5D48D2]" /><p className="mt-2 text-[9px] font-bold uppercase tracking-[0.1em] text-[#9294A0]">Location</p><p className="mt-0.5 text-[12px] font-bold text-[#30364E]">{report.location}</p></div><div className="rounded-[16px] border border-[#E4E0D8] bg-[#FFFDF9] p-3.5"><Clock3 size={16} className="text-[#5D48D2]" /><p className="mt-2 text-[9px] font-bold uppercase tracking-[0.1em] text-[#9294A0]">Reported</p><p className="mt-0.5 text-[12px] font-bold text-[#30364E]">{report.time}</p></div></div>
-            <section className="mt-7 border-t border-[#E4E0D8] pt-6"><h2 className="text-[12px] font-extrabold uppercase tracking-[0.13em]">What happened</h2><p className="mt-2.5 text-[13px] leading-6 text-[#676D7E]">{report.description}</p></section>
-            <section className="mt-6 rounded-[18px] border border-[#E3DED4] bg-[#F7F4EC] p-4"><div className="flex gap-3"><ShieldCheck size={19} className="mt-0.5 shrink-0 text-[#5D48D2]" /><div><h2 className="text-[12px] font-extrabold">Keep it verifiable</h2><p className="mt-1 text-[11px] leading-5 text-[#74798A]">Only claim this item if you can provide details that are not publicly visible. This helps prevent false claims.</p></div></div></section>
-            <div className="mt-6 space-y-2.5"><Link href={`/lost-found/${report.id}/claim`} className="flex h-12 w-full items-center justify-center gap-2 rounded-[15px] bg-[#23265B] text-[12px] font-extrabold text-white">{isLost ? "I found this item" : "This is my item"}<ChevronRight size={15} /></Link><Link href={`/lost-found/${report.id}/verify`} className="flex h-11 w-full items-center justify-center gap-2 rounded-[15px] border border-[#D9D4EA] bg-[#F0ECFA] text-[12px] font-extrabold text-[#4F3EAA]"><QrCode size={15} /> Verify with QR</Link><Link href="/lost-found" className="flex h-11 w-full items-center justify-center rounded-[15px] border border-[#DEDAD4] bg-[#FFFDF9] text-[12px] font-bold text-[#555B6D]">Back to reports</Link></div>
-            <div className="mt-6 flex items-center gap-2 text-[10px] text-[#9699A3]"><CheckCircle2 size={13} className="text-[#5D48D2]" /> CampusLoop reports are intended for campus members.</div>
+    <main className="min-h-screen bg-[#4E3439] text-[#172044]">
+      <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] px-5 pb-12 pt-6 sm:px-8">
+        <div className="mx-auto max-w-3xl">
+
+          {/* BACK */}
+          <Link
+            href="/lost-found"
+            className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#596075] hover:text-[#5141A9]"
+          >
+            <ArrowLeft size={16} />
+            Back to Lost &amp; Found
+          </Link>
+
+          {/* CARD */}
+          <div className="mt-7 overflow-hidden rounded-[24px] border border-[#E3DFD7] bg-[#FFFDF9] shadow-[0_8px_30px_rgba(23,32,68,0.05)]">
+
+            {/* IMAGE */}
+            <div className="relative flex h-[250px] w-full items-center justify-center bg-[#E8E9DC] sm:h-[320px]">
+
+              {report.image_url ? (
+                <img
+                  src={report.image_url}
+                  alt={report.title}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-[13px] font-medium text-[#68705F]">
+                  No photo
+                </span>
+              )}
+
+              {/* TYPE */}
+              <span
+                className={`absolute left-4 top-4 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                  isLost
+                    ? "bg-[#EEE9FF] text-[#5D48D2]"
+                    : "bg-[#E4F5EA] text-[#287A47]"
+                }`}
+              >
+                {report.type}
+              </span>
+
+              {/* STATUS */}
+              {isUnavailable && (
+                <span className="absolute right-4 top-4 rounded-full bg-[#23265B] px-3 py-1 text-[10px] font-bold text-white">
+                  {report.status === "claimed" ? "Claimed" : "Returned"}
+                </span>
+              )}
+            </div>
+
+            {/* CONTENT */}
+            <div className="p-6 sm:p-8">
+
+              {/* TITLE */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#6952D7]">
+                  {report.type} item
+                </p>
+
+                <h1 className="mt-2 text-[30px] font-bold tracking-[-0.05em] text-[#172044] sm:text-[38px]">
+                  {report.title}
+                </h1>
+
+                <p className="mt-1 text-[13px] font-medium text-[#6952D7]">
+                  {report.category}
+                </p>
+              </div>
+
+              {/* INFO */}
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
+
+                {/* LOCATION */}
+                <div className="rounded-[18px] border border-[#E3DFD7] bg-[#FFFDF9] p-4">
+                  <div className="flex items-start gap-3">
+                    <MapPin
+                      size={19}
+                      className="mt-0.5 shrink-0 text-[#6952D7]"
+                    />
+
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#777B8B]">
+                        Location
+                      </p>
+
+                      <p className="mt-1 text-[13px] font-semibold text-[#172044]">
+                        {report.location}
+                      </p>
+
+                      {report.specific_area && (
+                        <p className="mt-1 text-[11px] text-[#777B8B]">
+                          {report.specific_area}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* DATE */}
+                <div className="rounded-[18px] border border-[#E3DFD7] bg-[#FFFDF9] p-4">
+                  <div className="flex items-start gap-3">
+                    <CalendarDays
+                      size={19}
+                      className="mt-0.5 shrink-0 text-[#6952D7]"
+                    />
+
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#777B8B]">
+                        Date reported
+                      </p>
+
+                      <p className="mt-1 text-[13px] font-semibold text-[#172044]">
+                        {formatDate(report.date_reported)}
+                      </p>
+
+                      {report.approximate_time && (
+                        <p className="mt-1 text-[11px] text-[#777B8B]">
+                          Around {report.approximate_time}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* DESCRIPTION */}
+              <div className="mt-7 border-t border-[#E8E4DB] pt-7">
+                <h2 className="text-[15px] font-bold text-[#172044]">
+                  Description
+                </h2>
+
+                <div className="mt-3 rounded-[18px] border border-[#E3DFD7] bg-[#FFFDF9] p-4">
+                  <p className="whitespace-pre-wrap text-[13px] leading-6 text-[#596075]">
+                    {report.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* VERIFICATION */}
+              {!isUnavailable && (
+                <div className="mt-6 rounded-[18px] border border-[#DDD6FF] bg-[#F6F3FF] p-4 sm:p-5">
+                  <div className="flex items-start gap-3">
+
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#E9E3FF] text-[#5D48D2]">
+                      <ShieldCheck size={19} />
+                    </div>
+
+                    <div>
+                      <h3 className="text-[13px] font-bold text-[#172044]">
+                        Safe handover verification
+                      </h3>
+
+                      <p className="mt-1 text-[11px] leading-5 text-[#68708A]">
+                        If this is your item, submit a claim with details only
+                        the real owner would know. A verification code will be
+                        used before the item is handed over.
+                      </p>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* BUTTONS */}
+              <div className="mt-7">
+
+                {!isUnavailable ? (
+                  <Link
+  href={`/lost-found/${report.id}/claim`}
+  className="flex h-12 w-full items-center justify-center rounded-[14px] bg-[#23265B] px-5 text-[13px] font-bold text-white no-underline transition hover:bg-[#1D204F]"
+>
+  {isLost ? "This is my item" : "I think this is mine"}
+</Link>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      width: "100%",
+                      height: "48px",
+                      minHeight: "48px",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "14px",
+                      backgroundColor: "#E9E7E1",
+                      color: "#777B8B",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    This item is no longer available
+                  </div>
+                )}
+
+                <Link
+                  href="/lost-found"
+                  style={{
+                    display: "flex",
+                    width: "100%",
+                    height: "48px",
+                    minHeight: "48px",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginTop: "12px",
+                    padding: "0 20px",
+                    border: "1px solid #DEDAD1",
+                    borderRadius: "14px",
+                    backgroundColor: "#FFFDF9",
+                    color: "#4F5366",
+                    fontFamily: "Arial, sans-serif",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    lineHeight: "48px",
+                    textDecoration: "none",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  Back to Lost &amp; Found
+                </Link>
+
+              </div>
+            </div>
           </div>
         </div>
       </div>

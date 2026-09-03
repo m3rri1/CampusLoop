@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Instrument_Sans } from "next/font/google";
 import "./globals.css";
+import AppHeader from "@/components/app-header";
+import AppNavigation from "@/components/app-navigation";
 
 const instrument = Instrument_Sans({
   variable: "--font-instrument",
@@ -15,10 +17,23 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className={`${instrument.variable} h-full antialiased`}>
-      <body className="min-h-full bg-[#F5F3EE] text-[#17151C] font-sans">{children}</body>
+    <html
+      lang="en"
+      className={`${instrument.variable} h-full antialiased`}
+    >
+      <body className="min-h-full bg-[#4E3439] text-[#17151C] font-sans">
+
+        <AppHeader />
+
+        {children}
+
+        <AppNavigation />
+
+      </body>
     </html>
   );
 }

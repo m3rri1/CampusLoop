@@ -3,9 +3,9 @@ export interface Item {
   title: string;
   description: string;
   price: number;
-  category: 'electronics' | 'books' | 'stationery' | 'clothing' | 'other';
+  category: "electronics" | "books" | "stationery" | "clothing" | "other";
   categoryLabel: string;
-  condition: 'new' | 'like-new' | 'used';
+  condition: "new" | "like-new" | "used";
   imageUrl: string;
   location: string;
   sellerName: string;
@@ -13,4 +13,19 @@ export interface Item {
   sellerVerified: boolean;
   postedAgo: string;
   createdAt: string;
+}
+
+export interface LostFoundItem {
+  id: string;
+  title: string;
+  description: string;
+  type: "lost" | "found";
+  status: "active" | "claimed" | "returned";
+  category: string;
+  imageUrl: string;
+  location: string;
+  postedAgo: string;
+  createdAt: string;
+  reportedBy: string;
+  reportedByVerified: boolean;
 }
