@@ -71,6 +71,27 @@ export default function AppHeader() {
             priority
           />
         </Link>
+        {/* DESKTOP NAV LINKS */}
+<nav className="hidden items-center gap-1 md:flex">
+  {[
+    { href: "/marketplace", label: "Marketplace" },
+    { href: "/lost-found", label: "Lost & Found" },
+    { href: "/borrow", label: "Borrow" },
+    { href: "/chat", label: "Chat" },
+  ].map((item) => (
+    <Link
+      key={item.href}
+      href={item.href}
+      className={`rounded-xl px-4 py-2.5 text-[11px] font-semibold no-underline transition ${
+        pathname.startsWith(item.href)
+          ? "bg-[#23265B] text-white"
+          : "text-[#696C7C] hover:bg-[#F0EDE5] hover:text-[#23265B]"
+      }`}
+    >
+      {item.label}
+    </Link>
+  ))}
+</nav>
 
         {/* RIGHT ACTIONS */}
         <div className="flex items-center gap-2">

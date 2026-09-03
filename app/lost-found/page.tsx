@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { Bell, MapPin, Search, Plus, ChevronRight } from "lucide-react";
+import { MapPin, Search, Plus, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Report = {
@@ -40,20 +40,36 @@ export default function LostFoundPage() {
   const [category, setCategory] = useState("All");
   const [type, setType] = useState<"all" | "lost" | "found">("all");
 
-useEffect(() => {
-  console.log("🔥 LOST FOUND EFFECT STARTED");
+  useEffect(() => {
+    let isMounted = true;
 
-  const timer = setTimeout(() => {
-    console.log("🔥 TIMER FIRED");
+    async function fetchReports() {
+      setLoading(true);
+      setError("");
 
-    setLoading(false);
-    setError("TEST: React loading state is working.");
-  }, 3000);
+      const { data, error: fetchError } = await supabase
+        .from("lost_found_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-  return () => {
-    clearTimeout(timer);
-  };
-}, []);
+      if (!isMounted) return;
+
+      if (fetchError) {
+        setError(fetchError.message);
+        setLoading(false);
+        return;
+      }
+
+      setReports(data ?? []);
+      setLoading(false);
+    }
+
+    fetchReports();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
 
   const filteredReports = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -102,38 +118,12 @@ useEffect(() => {
   }
 
   return (
-    <main className="min-h-screen bg-[#4E3439] text-[#172044]">
+    <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
       <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] px-5 pb-24 pt-5 sm:px-8">
         <div className="mx-auto max-w-5xl">
 
-          {/* HEADER */}
-          <header className="flex items-center justify-between border-b border-[#E5E1D8] pb-4">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#EEE9FF] text-[13px] font-bold text-[#5D48D2]">
-                CL
-              </div>
-
-              <div>
-                <div className="text-[15px] font-bold tracking-[-0.02em]">
-                  CampusLoop
-                </div>
-
-                <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.2em] text-[#77798B]">
-                  Lost &amp; Found
-                </div>
-              </div>
-            </Link>
-
-            <button
-              type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#E1DDD4] bg-[#FFFDF9]"
-            >
-              <Bell size={16} strokeWidth={1.6} />
-            </button>
-          </header>
-
           {/* INTRO */}
-          <section className="pt-6">
+          <section>
             <p className="text-[9px] font-bold uppercase tracking-[0.24em] text-[#6952D7]">
               Lost &amp; Found
             </p>

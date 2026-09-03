@@ -25,7 +25,7 @@ export default function RootLayout({
       lang="en"
       className={`${instrument.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-[#4E3439] text-[#17151C] font-sans">
+      <body className="min-h-full bg-[#EEECE5] text-[#17151C] font-sans">
 
         <AppHeader />
 
