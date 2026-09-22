@@ -30,9 +30,9 @@ const categories = [
   "Clothing",
 ];
 
-export default function LostFoundPage() {
-  const supabase = createClient();
+const supabase = createClient();
 
+export default function LostFoundPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -69,7 +69,7 @@ export default function LostFoundPage() {
     return () => {
       isMounted = false;
     };
-  }, [supabase]);
+  }, []);
 
   const filteredReports = useMemo(() => {
     const query = search.trim().toLowerCase();
