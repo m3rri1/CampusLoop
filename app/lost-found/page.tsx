@@ -42,32 +42,55 @@ export default function LostFoundPage() {
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
 
     async function fetchReports() {
       setLoading(true);
       setError("");
 
-      const { data, error: fetchError } = await supabase
-        .from("lost_found_reports")
-        .select("*")
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("lost_found_reports")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .abortSignal(controller.signal);
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      if (fetchError) {
-        setError(fetchError.message);
+        if (fetchError) {
+          setReports([]);
+          setError(fetchError.message);
+          setLoading(false);
+          return;
+        }
+
+        setReports((data ?? []) as Report[]);
         setLoading(false);
-        return;
-      }
+      } catch (error) {
+        if (!isMounted) return;
 
-      setReports(data ?? []);
-      setLoading(false);
+        setReports([]);
+        setError(
+          error instanceof Error
+            ? error.name === "AbortError"
+              ? "The Lost & Found request timed out. Check your Supabase connection and try again."
+              : error.message
+            : "Could not load Lost & Found reports."
+        );
+        setLoading(false);
+      }
     }
+
+    const timeout = window.setTimeout(() => {
+      controller.abort();
+    }, 10000);
 
     fetchReports();
 
     return () => {
       isMounted = false;
+      window.clearTimeout(timeout);
+      controller.abort();
     };
   }, []);
 
