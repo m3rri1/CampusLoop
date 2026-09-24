@@ -72,6 +72,35 @@ export default function ClaimPage() {
         throw new Error("Please log in before submitting a claim.");
       }
 
+      const { data: existingProfile, error: profileCheckError } = await supabase
+  .from("profiles")
+  .select("id")
+  .eq("id", user.id)
+  .maybeSingle();
+
+if (profileCheckError) {
+  throw new Error(`Profile check failed: ${profileCheckError.message}`);
+}
+
+if (!existingProfile) {
+  const { error: profileInsertError } = await supabase
+    .from("profiles")
+    .insert({
+      id: user.id,
+      full_name:
+        user.user_metadata?.full_name ??
+        user.user_metadata?.name ??
+        user.email?.split("@")[0] ??
+        "CampusLoop Student",
+    });
+
+  if (profileInsertError) {
+    throw new Error(
+      `Could not create your profile: ${profileInsertError.message}`
+    );
+  }
+}
+
       // Check report
       const { data: report, error: reportError } = await supabase
         .from("lost_found_reports")
