@@ -108,7 +108,7 @@ export function ReportForm({ type }: ReportFormProps) {
   .upload(filePath, selectedImage, {
     cacheControl: "3600",
     contentType: selectedImage.type,
-    upsert: true,
+    upsert: false,
   });
 
         if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
