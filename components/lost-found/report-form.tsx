@@ -103,11 +103,13 @@ export function ReportForm({ type }: ReportFormProps) {
         const extension = selectedImage.name.split(".").pop()?.toLowerCase() || "jpg";
         const filePath = `${user.id}/${crypto.randomUUID()}.${extension}`;
 
-        const { error: uploadError } = await supabase.storage.from("lost-found").upload(filePath, selectedImage, {
-          cacheControl: "3600",
-          contentType: selectedImage.type,
-          upsert: false,
-        });
+        const { error: uploadError } = await supabase.storage
+  .from("lost-found")
+  .upload(filePath, selectedImage, {
+    cacheControl: "3600",
+    contentType: selectedImage.type,
+    upsert: true,
+  });
 
         if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
 

@@ -11,8 +11,7 @@ import type { User } from "@supabase/supabase-js";
 export default function AppHeader() {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
-
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
   useEffect(() => {
     let mounted = true;
@@ -41,9 +40,8 @@ export default function AppHeader() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
-  // Authentication pages have their own header.
   if (
     pathname === "/login" ||
     pathname === "/signup" ||
@@ -52,8 +50,15 @@ export default function AppHeader() {
     return null;
   }
 
+  const navLinks = [
+    { href: "/marketplace", label: "Marketplace" },
+    { href: "/lost-found", label: "Lost & Found" },
+    { href: "/borrow", label: "Borrow" },
+    { href: "/chat", label: "Chat" },
+  ];
+
   return (
-    <header className="sticky top-0 z-40 border-b border-[#E5E0D8] bg-[#FBF9F4]/95 px-5 py-3 backdrop-blur-md sm:px-8">
+    <header className="sticky top-0 z-40 bg-[#FBF9F4]/90 px-5 py-2.5 backdrop-blur-md shadow-[0_1px_0_rgba(23,32,68,0.06)] sm:px-8">
       <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between">
 
         {/* LOGO */}
@@ -67,51 +72,50 @@ export default function AppHeader() {
             alt="CampusLoop"
             width={120}
             height={76}
-            className="h-12 w-auto object-contain"
+            className="h-10 w-auto object-contain"
             priority
           />
         </Link>
+
         {/* DESKTOP NAV LINKS */}
-<nav className="hidden items-center gap-1 md:flex">
-  {[
-    { href: "/marketplace", label: "Marketplace" },
-    { href: "/lost-found", label: "Lost & Found" },
-    { href: "/borrow", label: "Borrow" },
-    { href: "/chat", label: "Chat" },
-  ].map((item) => (
-    <Link
-      key={item.href}
-      href={item.href}
-      className={`rounded-xl px-4 py-2.5 text-[11px] font-semibold no-underline transition ${
-        pathname.startsWith(item.href)
-          ? "bg-[#23265B] text-white"
-          : "text-[#696C7C] hover:bg-[#F0EDE5] hover:text-[#23265B]"
-      }`}
-    >
-      {item.label}
-    </Link>
-  ))}
-</nav>
+        <nav className="hidden items-center gap-1 md:flex">
+          {navLinks.map((item) => {
+            const active = pathname.startsWith(item.href);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`rounded-full px-4 py-2 text-[11px] font-semibold no-underline transition ${
+                  active
+                    ? "bg-[#23265B] text-white shadow-[0_3px_10px_rgba(35,38,91,0.25)]"
+                    : "text-[#696C7C] hover:bg-[#F0EDE5] hover:text-[#23265B]"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
         {/* RIGHT ACTIONS */}
         <div className="flex items-center gap-2">
-
           {user ? (
             <Link
               href="/profile"
               aria-label="Profile"
-              className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
+              className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
                 pathname.startsWith("/profile")
                   ? "border-[#CFC8FF] bg-[#F0ECFF] text-[#5D48D2]"
-                  : "border-[#DEDAD1] bg-[#FFFDF9] text-[#171A35] hover:bg-white"
+                  : "border-[#E1DDD4] bg-white text-[#171A35] hover:border-[#CFC8FF]"
               }`}
             >
-              <UserRound size={17} strokeWidth={1.8} />
+              <UserRound size={16} strokeWidth={1.9} />
             </Link>
           ) : (
             <Link
               href="/login"
-              className="flex h-10 items-center justify-center rounded-full border border-[#DEDAD1] bg-[#FFFDF9] px-4 text-[11px] font-semibold text-[#23265B] transition hover:bg-white"
+              className="flex h-9 items-center justify-center rounded-full border border-[#E1DDD4] bg-white px-4 text-[11px] font-semibold text-[#23265B] transition hover:border-[#CFC8FF]"
             >
               Sign in
             </Link>
@@ -120,11 +124,10 @@ export default function AppHeader() {
           <button
             type="button"
             aria-label="Notifications"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#DEDAD1] bg-[#FFFDF9] text-[#171A35] transition hover:bg-white"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1DDD4] bg-white text-[#171A35] transition hover:border-[#CFC8FF]"
           >
-            <Bell size={17} strokeWidth={1.7} />
+            <Bell size={16} strokeWidth={1.8} />
           </button>
-
         </div>
       </div>
     </header>

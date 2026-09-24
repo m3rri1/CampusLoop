@@ -1,14 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Bell, Check, Loader2 } from "lucide-react";
+import { ArrowUpRight, Check, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,9 +30,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: {
-          full_name: name,
-        },
+        data: { full_name: name },
       },
     });
 
@@ -47,9 +46,7 @@ export default function SignupPage() {
       return;
     }
 
-    setMessage(
-      "Account created. Check your college email to confirm your account."
-    );
+    setMessage("Account created. Check your college email to confirm your account.");
     setLoading(false);
   }
 
@@ -59,9 +56,7 @@ export default function SignupPage() {
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
 
     if (error) {
@@ -71,42 +66,33 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f5f2ea] text-[#171a35]">
-      <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col px-6">
+    <main className="min-h-screen bg-[#EEECE5] text-[#171A35]">
+      <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col bg-[#FBF9F4] px-6">
 
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-[#dedbd2] py-5">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#20265f] text-sm font-bold text-white">
-              CL
-            </div>
-
-            <div>
-              <div className="text-[15px] font-semibold tracking-[-0.02em]">
-                CampusLoop
-              </div>
-
-              <div className="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#77768a]">
-                Campus community
-              </div>
-            </div>
+        <header className="flex items-center justify-center border-b border-[#DEDBD2] py-5">
+          <Link href="/" className="flex items-center" aria-label="CampusLoop home">
+            <Image
+              src="/logo.png"
+              alt="CampusLoop"
+              width={120}
+              height={76}
+              className="h-10 w-auto object-contain"
+              priority
+            />
           </Link>
-
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#dedbd2] bg-[#faf8f2]">
-            <Bell size={16} strokeWidth={1.6} />
-          </div>
         </header>
 
         {/* Intro */}
-        <section className="pt-16">
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6654d9]">
+        <section className="pt-14">
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6654D9]">
             Join CampusLoop
           </p>
 
-          <h1 className="max-w-[350px] text-[42px] font-bold leading-[0.98] tracking-[-0.055em]">
+          <h1 className="max-w-[350px] text-[40px] font-bold leading-[0.98] tracking-[-0.055em]">
             Your campus,
             <br />
-            <span className="text-[#6654d9]">in one loop.</span>
+            <span className="text-[#6654D9]">in one loop.</span>
           </h1>
 
           <p className="mt-5 max-w-[315px] text-[14px] leading-6 text-[#696979]">
@@ -116,17 +102,12 @@ export default function SignupPage() {
         </section>
 
         {/* Form */}
-        <section className="mt-10">
+        <section className="mt-9">
           <form onSubmit={handleSignup} className="space-y-5">
-
             <div>
-              <label
-                htmlFor="name"
-                className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768a]"
-              >
+              <label htmlFor="name" className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768A]">
                 Full name
               </label>
-
               <input
                 id="name"
                 type="text"
@@ -134,18 +115,14 @@ export default function SignupPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="h-[52px] w-full rounded-[14px] border border-[#dcd9d0] bg-[#faf8f2] px-4 text-[14px] outline-none placeholder:text-[#aaa8a0] focus:border-[#6654d9] focus:ring-2 focus:ring-[#6654d9]/10"
+                className="h-[52px] w-full rounded-[14px] border border-[#DCD9D0] bg-[#FAF8F2] px-4 text-[14px] outline-none placeholder:text-[#AAA8A0] focus:border-[#6654D9] focus:ring-2 focus:ring-[#6654D9]/10"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768a]"
-              >
+              <label htmlFor="email" className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768A]">
                 College email
               </label>
-
               <input
                 id="email"
                 type="email"
@@ -153,18 +130,14 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-[52px] w-full rounded-[14px] border border-[#dcd9d0] bg-[#faf8f2] px-4 text-[14px] outline-none placeholder:text-[#aaa8a0] focus:border-[#6654d9] focus:ring-2 focus:ring-[#6654d9]/10"
+                className="h-[52px] w-full rounded-[14px] border border-[#DCD9D0] bg-[#FAF8F2] px-4 text-[14px] outline-none placeholder:text-[#AAA8A0] focus:border-[#6654D9] focus:ring-2 focus:ring-[#6654D9]/10"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768a]"
-              >
+              <label htmlFor="password" className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768A]">
                 Password
               </label>
-
               <input
                 id="password"
                 type="password"
@@ -173,7 +146,7 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 minLength={6}
                 required
-                className="h-[52px] w-full rounded-[14px] border border-[#dcd9d0] bg-[#faf8f2] px-4 text-[14px] outline-none placeholder:text-[#aaa8a0] focus:border-[#6654d9] focus:ring-2 focus:ring-[#6654d9]/10"
+                className="h-[52px] w-full rounded-[14px] border border-[#DCD9D0] bg-[#FAF8F2] px-4 text-[14px] outline-none placeholder:text-[#AAA8A0] focus:border-[#6654D9] focus:ring-2 focus:ring-[#6654D9]/10"
               />
             </div>
 
@@ -192,59 +165,36 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex h-[54px] w-full items-center justify-between rounded-[14px] bg-[#20265f] px-5 text-[13px] font-semibold text-white transition hover:bg-[#181d50] disabled:opacity-60"
+              className="flex h-[54px] w-full items-center justify-between rounded-[14px] bg-[#20265F] px-5 text-[13px] font-semibold text-white transition hover:bg-[#181D50] disabled:opacity-60"
             >
-              <span>
-                {loading ? "Creating account..." : "Create my account"}
-              </span>
-
-              {loading ? (
-                <Loader2 size={17} className="animate-spin" />
-              ) : (
-                <ArrowUpRight size={18} />
-              )}
+              <span>{loading ? "Creating account..." : "Create my account"}</span>
+              {loading ? <Loader2 size={17} className="animate-spin" /> : <ArrowUpRight size={18} />}
             </button>
           </form>
 
-          {/* Divider */}
           <div className="my-7 flex items-center gap-4">
-            <div className="h-px flex-1 bg-[#dedbd2]" />
-
-            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#aaa8a0]">
-              or
-            </span>
-
-            <div className="h-px flex-1 bg-[#dedbd2]" />
+            <div className="h-px flex-1 bg-[#DEDBD2]" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#AAA8A0]">or</span>
+            <div className="h-px flex-1 bg-[#DEDBD2]" />
           </div>
 
-          {/* Google */}
           <button
             type="button"
             onClick={handleGoogleSignup}
             disabled={googleLoading}
-            className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[14px] border border-[#d8d5cc] bg-[#faf8f2] text-[13px] font-semibold text-[#25263a] transition hover:bg-white disabled:opacity-60"
+            className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[14px] border border-[#D8D5CC] bg-[#FAF8F2] text-[13px] font-semibold text-[#25263A] transition hover:bg-white disabled:opacity-60"
           >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[12px] font-bold shadow-sm">
-              G
-            </span>
-
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[12px] font-bold shadow-sm">G</span>
             {googleLoading ? "Connecting..." : "Continue with Google"}
           </button>
         </section>
 
-        {/* Bottom */}
-        <div className="mt-auto border-t border-[#dedbd2] py-7 text-center">
-          <p className="text-[12px] text-[#77768a]">
+        <div className="mt-auto border-t border-[#DEDBD2] py-7 text-center">
+          <p className="text-[12px] text-[#77768A]">
             Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-semibold text-[#6654d9]"
-            >
-              Sign in
-            </Link>
+            <Link href="/login" className="font-semibold text-[#6654D9]">Sign in</Link>
           </p>
-
-          <div className="mt-4 flex items-center justify-center gap-2 text-[9px] uppercase tracking-[0.15em] text-[#aaa8a0]">
+          <div className="mt-4 flex items-center justify-center gap-2 text-[9px] uppercase tracking-[0.15em] text-[#AAA8A0]">
             <Check size={11} />
             Built for your campus
           </div>

@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Bell, LogOut, Menu, User, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function Navbar() {
+  const [supabase] = useState(() => createClient());
   const [user, setUser] = useState<any>(null);
   const [name, setName] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const supabase = createClient();
 
   useEffect(() => {
     async function loadUser() {
@@ -61,75 +61,61 @@ export default function Navbar() {
     window.location.href = "/";
   }
 
+  const navLinks = [
+    { href: "/marketplace", label: "Marketplace" },
+    { href: "/lost-found", label: "Lost & Found" },
+    { href: "/borrow", label: "Borrow" },
+    { href: "/chat", label: "Chat" },
+  ];
+
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E3DFD7] bg-[#FBF9F4]/95 backdrop-blur">
-      <div className="mx-auto flex h-[72px] max-w-[1280px] items-center justify-between px-5 sm:px-8">
+    <header className="sticky top-0 z-50 bg-[#FBF9F4]/90 px-5 py-2.5 backdrop-blur-md shadow-[0_1px_0_rgba(23,32,68,0.06)] sm:px-8">
+      <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between">
 
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-3"
+          className="flex items-center"
           onClick={() => setMobileOpen(false)}
+          aria-label="CampusLoop home"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#20265F] text-sm font-bold text-white">
-            CL
-          </div>
-
-          <div>
-            <div className="text-[15px] font-bold tracking-[-0.02em] text-[#171A35]">
-              CampusLoop
-            </div>
-            <div className="text-[8px] font-semibold uppercase tracking-[0.2em] text-[#77768A]">
-              Campus community
-            </div>
-          </div>
+          <Image
+            src="/logo.png"
+            alt="CampusLoop"
+            width={120}
+            height={76}
+            className="h-10 w-auto object-contain"
+            priority
+          />
         </Link>
 
         {/* Desktop navigation */}
-        <nav className="hidden items-center gap-7 md:flex">
-          <Link
-            href="/marketplace"
-            className="text-[12px] font-semibold text-[#55586B] transition hover:text-[#6654D9]"
-          >
-            Marketplace
-          </Link>
-
-          <Link
-            href="/borrow"
-            className="text-[12px] font-semibold text-[#55586B] transition hover:text-[#6654D9]"
-          >
-            Borrow
-          </Link>
-
-          <Link
-            href="/lost-found"
-            className="text-[12px] font-semibold text-[#55586B] transition hover:text-[#6654D9]"
-          >
-            Lost &amp; Found
-          </Link>
-
-          <Link
-            href="/chat"
-            className="text-[12px] font-semibold text-[#55586B] transition hover:text-[#6654D9]"
-          >
-            Chat
-          </Link>
+        <nav className="hidden items-center gap-1 md:flex">
+          {navLinks.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-full px-4 py-2 text-[11px] font-semibold text-[#696C7C] transition hover:bg-[#F0EDE5] hover:text-[#23265B]"
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         {/* Right side */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           {!loading && !user && (
             <>
               <Link
                 href="/login"
-                className="flex h-10 items-center rounded-[12px] px-4 text-[12px] font-semibold text-[#4F5366] hover:bg-[#F1EEE7]"
+                className="flex h-9 items-center rounded-full px-4 text-[11px] font-semibold text-[#4F5366] hover:bg-[#F0EDE5]"
               >
                 Log in
               </Link>
 
               <Link
                 href="/signup"
-                className="flex h-10 items-center rounded-[12px] bg-[#20265F] px-4 text-[12px] font-bold text-white hover:bg-[#181D50]"
+                className="flex h-9 items-center rounded-full bg-[#23265B] px-4 text-[11px] font-bold text-white shadow-[0_3px_10px_rgba(35,38,91,0.25)] hover:bg-[#181D50]"
               >
                 Create account
               </Link>
@@ -140,82 +126,68 @@ export default function Navbar() {
             <>
               <Link
                 href="/profile"
-                className="flex h-10 items-center gap-2 rounded-[12px] border border-[#DEDAD1] bg-[#FFFDF9] px-3 hover:border-[#C8C1EE]"
+                className="flex h-9 items-center gap-2 rounded-full border border-[#E1DDD4] bg-white px-3 hover:border-[#CFC8FF]"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#EEE9FF] text-[10px] font-bold text-[#5D48D2]">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#EEE9FF] text-[9px] font-bold text-[#5D48D2]">
                   {name.charAt(0).toUpperCase()}
                 </div>
 
-                <span className="max-w-[100px] truncate text-[12px] font-semibold text-[#343A56]">
+                <span className="max-w-[100px] truncate text-[11px] font-semibold text-[#343A56]">
                   {name}
                 </span>
               </Link>
 
               <button
                 onClick={handleLogout}
-                className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#DEDAD1] bg-[#FFFDF9] text-[#646779] hover:text-red-600"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1DDD4] bg-white text-[#646779] transition hover:border-red-200 hover:text-red-600"
                 title="Log out"
               >
-                <LogOut size={15} />
+                <LogOut size={14} />
               </button>
             </>
           )}
+
+          <button
+            type="button"
+            aria-label="Notifications"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1DDD4] bg-white text-[#171A35] transition hover:border-[#CFC8FF]"
+          >
+            <Bell size={16} strokeWidth={1.8} />
+          </button>
         </div>
 
         {/* Mobile button */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[#DEDAD1] bg-[#FFFDF9] md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1DDD4] bg-white md:hidden"
         >
-          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          {mobileOpen ? <X size={17} /> : <Menu size={17} />}
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-[#E3DFD7] bg-[#FBF9F4] px-5 py-5 md:hidden">
+        <div className="mt-3 rounded-[20px] border border-[#E7E2D8] bg-white p-3 shadow-[0_10px_35px_rgba(23,32,68,0.12)] md:hidden">
           <nav className="flex flex-col gap-1">
+            {navLinks.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className="rounded-[14px] px-3 py-3 text-[13px] font-semibold text-[#45485B] hover:bg-[#F0EDE5]"
+              >
+                {item.label}
+              </Link>
+            ))}
 
-            <Link
-              href="/marketplace"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-[12px] px-3 py-3 text-[13px] font-semibold text-[#45485B] hover:bg-[#F1EEE7]"
-            >
-              Marketplace
-            </Link>
-
-            <Link
-              href="/borrow"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-[12px] px-3 py-3 text-[13px] font-semibold text-[#45485B] hover:bg-[#F1EEE7]"
-            >
-              Borrow
-            </Link>
-
-            <Link
-              href="/lost-found"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-[12px] px-3 py-3 text-[13px] font-semibold text-[#45485B] hover:bg-[#F1EEE7]"
-            >
-              Lost &amp; Found
-            </Link>
-
-            <Link
-              href="/chat"
-              onClick={() => setMobileOpen(false)}
-              className="rounded-[12px] px-3 py-3 text-[13px] font-semibold text-[#45485B] hover:bg-[#F1EEE7]"
-            >
-              Chat
-            </Link>
-
-            <div className="my-3 h-px bg-[#E3DFD7]" />
+            <div className="my-2 h-px bg-[#EDE9E0]" />
 
             {!loading && !user ? (
               <>
                 <Link
                   href="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-[12px] px-3 py-3 text-[13px] font-semibold text-[#45485B]"
+                  className="rounded-[14px] px-3 py-3 text-[13px] font-semibold text-[#45485B]"
                 >
                   Log in
                 </Link>
@@ -223,7 +195,7 @@ export default function Navbar() {
                 <Link
                   href="/signup"
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-[12px] bg-[#20265F] px-3 py-3 text-center text-[13px] font-bold text-white"
+                  className="rounded-[14px] bg-[#23265B] px-3 py-3 text-center text-[13px] font-bold text-white"
                 >
                   Create account
                 </Link>
@@ -233,7 +205,7 @@ export default function Navbar() {
                 <Link
                   href="/profile"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 rounded-[12px] px-3 py-3 text-[13px] font-semibold text-[#45485B]"
+                  className="flex items-center gap-2 rounded-[14px] px-3 py-3 text-[13px] font-semibold text-[#45485B]"
                 >
                   <User size={16} />
                   My profile
@@ -241,7 +213,7 @@ export default function Navbar() {
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 rounded-[12px] px-3 py-3 text-left text-[13px] font-semibold text-red-600"
+                  className="flex items-center gap-2 rounded-[14px] px-3 py-3 text-left text-[13px] font-semibold text-red-600"
                 >
                   <LogOut size={16} />
                   Log out

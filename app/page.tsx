@@ -1,24 +1,30 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
-  Bell,
+  Heart,
   BookOpen,
   ChevronRight,
-  Heart,
   Package,
   Search,
   ShieldCheck,
+  Sparkles,
   UserRound,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function HomePage() {
-  const supabase = createClient();
+const quickFilters = [
+  { href: "/marketplace?category=Electronics", label: "Electronics" },
+  { href: "/marketplace?category=Books", label: "Books" },
+  { href: "/lost-found?type=lost", label: "Lost items" },
+  { href: "/borrow", label: "Borrow gear" },
+  { href: "/lost-found?type=found", label: "Found items" },
+];
 
+export default function HomePage() {
+  const [supabase] = useState(() => createClient());
   const [user, setUser] = useState<any>(null);
   const [name, setName] = useState("");
 
@@ -33,13 +39,9 @@ export default function HomePage() {
       if (!mounted) return;
 
       setUser(user);
-
-      const fullName =
-        user?.user_metadata?.full_name ||
-        user?.user_metadata?.name ||
-        "";
-
-      setName(fullName);
+      setName(
+        user?.user_metadata?.full_name || user?.user_metadata?.name || ""
+      );
     }
 
     loadUser();
@@ -48,38 +50,39 @@ export default function HomePage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
-
       setUser(currentUser);
-
-      const fullName =
+      setName(
         currentUser?.user_metadata?.full_name ||
-        currentUser?.user_metadata?.name ||
-        "";
-
-      setName(fullName);
+          currentUser?.user_metadata?.name ||
+          ""
+      );
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [supabase]);
 
   const firstName = name ? name.split(" ")[0] : "";
 
   return (
-    <main className="min-h-screen bg-[#4E3439] text-[#171A35]">
+    <main className="min-h-screen bg-[#EEECE5] text-[#171A35]">
       <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] pb-28">
 
-        {/* HEADER */}
-        {/* HEADER */}
+        {/* HERO PANEL — full-bleed color block, not a floating card */}
+        <section className="relative overflow-hidden rounded-b-[32px] bg-[#20265F] px-5 pb-8 pt-9 text-white sm:px-8 sm:pb-12 sm:pt-12">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[#6654D9]/30 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-[#8C7BFF]/20 blur-3xl"
+          />
 
-
-        {/* HERO */}
-        <section className="px-5 pt-10 sm:px-8 sm:pt-14">
-          <div className="max-w-2xl">
-
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#6952D7]">
+          <div className="relative flex items-center justify-between">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#BEB8FF]">
               {user
                 ? firstName
                   ? `Welcome back, ${firstName}`
@@ -87,205 +90,135 @@ export default function HomePage() {
                 : "Your campus. Connected."}
             </p>
 
-            <h1 className="mt-3 text-[40px] font-bold leading-[0.98] tracking-[-0.055em] sm:text-[52px]">
-              Everything
-              <br />
-              around your
-              <br />
-              campus.
-              <br />
-              <span className="text-[#6654D9]">In one loop.</span>
-            </h1>
+            <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1.5 text-[9px] font-bold text-[#DCD6FF]">
+              <Sparkles size={11} />
+              PPSU
+            </span>
+          </div>
 
-            <p className="mt-5 max-w-[500px] text-[14px] leading-6 text-[#686A7C]">
-              Buy and sell with students, borrow things you need,
-              report lost items and connect with your campus community.
-            </p>
+          <h1 className="relative mt-3 text-[36px] font-bold leading-[0.98] tracking-[-0.05em] sm:text-[48px]">
+            Everything around
+            <br />
+            your campus,
+            <br />
+            <span className="text-[#B3A7FF]">in one loop.</span>
+          </h1>
+
+          <p className="relative mt-4 max-w-[440px] text-[13px] leading-5 text-[#C8C6E0]">
+            Buy and sell with students, borrow things you need, report
+            lost items and connect with your campus community.
+          </p>
+
+          {/* SEARCH — a real input sitting in the hero, not a card explaining search */}
+          <div className="relative mt-6 flex h-12 items-center gap-3 rounded-[15px] bg-white px-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+            <Search size={17} className="shrink-0 text-[#6952D7]" />
+            <input
+              placeholder="Search marketplace, lost items..."
+              readOnly
+              onClick={() => (window.location.href = "/marketplace")}
+              className="w-full cursor-pointer bg-transparent text-[13px] text-[#171A35] outline-none placeholder:text-[#9C9AB0]"
+            />
           </div>
         </section>
 
-        {/* QUICK ACTIONS */}
-        <section className="mt-8 px-5 sm:px-8">
-          <div className="grid grid-cols-2 gap-3">
+        {/* QUICK FILTER RAIL — tactile pills, not a card */}
+        <section className="mt-5 px-5 sm:px-8">
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {quickFilters.map((f) => (
+              <Link
+                key={f.href}
+                href={f.href}
+                className="shrink-0 rounded-full border border-[#E1DDD4] bg-[#FFFDF9] px-4 py-2 text-[10.5px] font-semibold text-[#4A4D63] transition hover:border-[#C8C1EE] hover:text-[#5D48D2]"
+              >
+                {f.label}
+              </Link>
+            ))}
+          </div>
+        </section>
 
-            <Link
-              href="/marketplace"
-              className="group rounded-[18px] border border-[#E1DDD5] bg-[#FFFDF9] p-4 shadow-[0_5px_20px_rgba(23,32,68,0.04)] transition hover:-translate-y-0.5"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#EEE9FF] text-[#6250D5]">
-                  <Package size={19} />
-                </div>
+        {/* BENTO GRID — one featured card, three smaller ones. Not a uniform 2x2. */}
+        <section className="mt-6 px-5 sm:px-8">
 
-                <ArrowUpRight
-                  size={16}
-                  className="text-[#8B8B98] transition group-hover:text-[#6250D5]"
-                />
+          {/* Featured: Marketplace */}
+          <Link
+            href="/marketplace"
+            className="group flex items-center justify-between rounded-[22px] border border-[#E1DDD5] bg-gradient-to-br from-[#F6F3FF] to-[#FFFDF9] p-5 shadow-[0_5px_20px_rgba(23,32,68,0.05)] transition hover:-translate-y-0.5"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] bg-[#5D48D2] text-white">
+                <Package size={24} />
               </div>
+              <div>
+                <h2 className="text-[16px] font-bold">Marketplace</h2>
+                <p className="mt-0.5 text-[11px] leading-4 text-[#6D7184]">
+                  Buy & sell with verified students on campus
+                </p>
+              </div>
+            </div>
 
-              <h2 className="mt-4 text-[13px] font-bold">
-                Marketplace
-              </h2>
+            <ArrowUpRight
+              size={20}
+              className="shrink-0 text-[#8B8B98] transition group-hover:translate-x-1 group-hover:-translate-y-1 group-hover:text-[#5D48D2]"
+            />
+          </Link>
 
-              <p className="mt-1 text-[10px] leading-4 text-[#77798A]">
-                Buy & sell on campus
-              </p>
-            </Link>
-
+          {/* Three smaller cards */}
+          <div className="mt-3 grid grid-cols-3 gap-3">
             <Link
               href="/lost-found"
-              className="group rounded-[18px] border border-[#E1DDD5] bg-[#FFFDF9] p-4 shadow-[0_5px_20px_rgba(23,32,68,0.04)] transition hover:-translate-y-0.5"
+              className="group flex flex-col rounded-[18px] border border-[#E1DDD5] bg-[#FFFDF9] p-3.5 shadow-[0_5px_20px_rgba(23,32,68,0.04)] transition hover:-translate-y-0.5"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#EEE9FF] text-[#6250D5]">
-                  <Search size={19} />
-                </div>
-
-                <ArrowUpRight
-                  size={16}
-                  className="text-[#8B8B98] transition group-hover:text-[#6250D5]"
-                />
+              <div className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-[#FFE9D6] text-[#C2661A]">
+                <Search size={16} />
               </div>
-
-              <h2 className="mt-4 text-[13px] font-bold">
-                Lost & Found
-              </h2>
-
-              <p className="mt-1 text-[10px] leading-4 text-[#77798A]">
+              <h3 className="mt-2.5 text-[11.5px] font-bold leading-tight">
+                Lost &amp; Found
+              </h3>
+              <p className="mt-0.5 text-[9px] leading-3 text-[#8B8D9A]">
                 Find what you lost
               </p>
             </Link>
 
             <Link
               href="/borrow"
-              className="group rounded-[18px] border border-[#E1DDD5] bg-[#FFFDF9] p-4 shadow-[0_5px_20px_rgba(23,32,68,0.04)] transition hover:-translate-y-0.5"
+              className="group flex flex-col rounded-[18px] border border-[#E1DDD5] bg-[#FFFDF9] p-3.5 shadow-[0_5px_20px_rgba(23,32,68,0.04)] transition hover:-translate-y-0.5"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#EEE9FF] text-[#6250D5]">
-                  <BookOpen size={19} />
-                </div>
-
-                <ArrowUpRight
-                  size={16}
-                  className="text-[#8B8B98] transition group-hover:text-[#6250D5]"
-                />
+              <div className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-[#DAF3E4] text-[#1F8A4C]">
+                <BookOpen size={16} />
               </div>
-
-              <h2 className="mt-4 text-[13px] font-bold">
-                Borrow & Rent
-              </h2>
-
-              <p className="mt-1 text-[10px] leading-4 text-[#77798A]">
-                Get things without buying
+              <h3 className="mt-2.5 text-[11.5px] font-bold leading-tight">
+                Borrow
+              </h3>
+              <p className="mt-0.5 text-[9px] leading-3 text-[#8B8D9A]">
+                No buying needed
               </p>
             </Link>
 
             <Link
               href="/profile"
-              className="group rounded-[18px] border border-[#E1DDD5] bg-[#FFFDF9] p-4 shadow-[0_5px_20px_rgba(23,32,68,0.04)] transition hover:-translate-y-0.5"
+              className="group flex flex-col rounded-[18px] border border-[#E1DDD5] bg-[#FFFDF9] p-3.5 shadow-[0_5px_20px_rgba(23,32,68,0.04)] transition hover:-translate-y-0.5"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#EEE9FF] text-[#6250D5]">
-                  <UserRound size={19} />
-                </div>
-
-                <ArrowUpRight
-                  size={16}
-                  className="text-[#8B8B98] transition group-hover:text-[#6250D5]"
-                />
+              <div className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-[#FDE2ED] text-[#C23D74]">
+                <UserRound size={16} />
               </div>
-
-              <h2 className="mt-4 text-[13px] font-bold">
-                My Profile
-              </h2>
-
-              <p className="mt-1 text-[10px] leading-4 text-[#77798A]">
-                Account & activity
+              <h3 className="mt-2.5 text-[11.5px] font-bold leading-tight">
+                Profile
+              </h3>
+              <p className="mt-0.5 text-[9px] leading-3 text-[#8B8D9A]">
+                Your activity
               </p>
             </Link>
           </div>
         </section>
 
-        {/* SEARCH */}
-        <section className="mt-8 px-5 sm:px-8">
-          <div className="rounded-[22px] border border-[#E1DDD5] bg-[#FFFDF9] p-5 shadow-[0_5px_20px_rgba(23,32,68,0.04)]">
-
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#EEE9FF] text-[#6250D5]">
-                <Search size={18} />
-              </div>
-
-              <div>
-                <h2 className="text-[13px] font-bold">
-                  What are you looking for?
-                </h2>
-
-                <p className="mt-0.5 text-[10px] text-[#858695]">
-                  Search across your campus
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-2">
-
-              <Link
-                href="/marketplace"
-                className="flex items-center justify-between rounded-[15px] border border-[#E6E1D9] bg-[#FBF9F4] px-4 py-3"
-              >
-                <div>
-                  <p className="text-[11px] font-bold">Marketplace</p>
-                  <p className="mt-0.5 text-[9px] text-[#888997]">
-                    Books, calculators, projects & more
-                  </p>
-                </div>
-
-                <ChevronRight size={15} />
-              </Link>
-
-              <Link
-                href="/borrow"
-                className="flex items-center justify-between rounded-[15px] border border-[#E6E1D9] bg-[#FBF9F4] px-4 py-3"
-              >
-                <div>
-                  <p className="text-[11px] font-bold">Borrow & Rent</p>
-                  <p className="mt-0.5 text-[9px] text-[#888997]">
-                    Get things without buying them
-                  </p>
-                </div>
-
-                <ChevronRight size={15} />
-              </Link>
-
-              <Link
-                href="/lost-found"
-                className="flex items-center justify-between rounded-[15px] border border-[#E6E1D9] bg-[#FBF9F4] px-4 py-3"
-              >
-                <div>
-                  <p className="text-[11px] font-bold">Lost & Found</p>
-                  <p className="mt-0.5 text-[9px] text-[#888997]">
-                    Find or report something
-                  </p>
-                </div>
-
-                <ChevronRight size={15} />
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* TRUST */}
+        {/* TRUST STRIP */}
         <section className="mt-6 px-5 sm:px-8">
           <div className="flex items-start gap-3 rounded-[18px] border border-[#DDD6FF] bg-[#F6F3FF] p-4">
-
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] bg-[#E9E3FF] text-[#5D48D2]">
               <ShieldCheck size={18} />
             </div>
-
             <div>
-              <p className="text-[11px] font-bold">
-                Built for your campus
-              </p>
-
+              <p className="text-[11px] font-bold">Built for your campus</p>
               <p className="mt-1 text-[10px] leading-4 text-[#70738A]">
                 CampusLoop keeps buying, borrowing and connecting
                 between students in one place.
@@ -296,26 +229,28 @@ export default function HomePage() {
 
         {/* ACCOUNT CTA */}
         {!user && (
-          <section className="mt-8 px-5 sm:px-8">
-            <div className="rounded-[22px] bg-[#23265B] p-5 text-white">
+          <section className="mt-6 px-5 sm:px-8">
+            <div className="relative overflow-hidden rounded-[24px] bg-[#23265B] p-5 text-white">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/5"
+              />
 
-              <div className="flex items-start justify-between">
+              <div className="relative flex items-start justify-between">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#BEB8FF]">
                     New here?
                   </p>
-
                   <h2 className="mt-2 text-[20px] font-bold tracking-[-0.03em]">
                     Join your campus loop.
                   </h2>
                 </div>
-
                 <Heart size={19} className="text-[#BEB8FF]" />
               </div>
 
               <Link
                 href="/signup"
-                className="mt-5 flex h-11 items-center justify-center rounded-[13px] bg-white text-[12px] font-bold text-[#23265B]"
+                className="relative mt-5 flex h-11 items-center justify-center rounded-[13px] bg-white text-[12px] font-bold text-[#23265B]"
               >
                 Create account
               </Link>

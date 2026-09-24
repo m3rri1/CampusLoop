@@ -50,34 +50,35 @@ export default function MarketplacePage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#4E3439] text-[#172044]">
+    <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
       <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] pb-28">
 
-        {/* PAGE CONTENT */}
-        <div className="px-5 pt-7 sm:px-8 sm:pt-9">
+        {/* HERO PANEL */}
+        <section className="relative overflow-hidden rounded-b-[32px] bg-[#20265F] px-5 pb-8 pt-9 text-white sm:px-8 sm:pb-10 sm:pt-11">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-[#5E4BD1]/30 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-24 left-16 h-52 w-52 rounded-full bg-[#8C7BFF]/20 blur-3xl"
+          />
 
-          {/* PAGE INTRO */}
-          <section>
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#6952D7]">
-              Campus marketplace
-            </p>
+          <p className="relative text-[10px] font-bold uppercase tracking-[0.22em] text-[#BEB8FF]">
+            Campus marketplace
+          </p>
 
-            <h1 className="mt-2 text-[30px] font-bold tracking-[-0.055em] text-[#172044] sm:text-[38px]">
-              Marketplace
-            </h1>
+          <h1 className="relative mt-2 text-[30px] font-bold tracking-[-0.055em] sm:text-[38px]">
+            Marketplace
+          </h1>
 
-            <p className="mt-1.5 text-[13px] font-medium text-[#6D7184]">
-              Buy and sell useful things within your campus.
-            </p>
-          </section>
+          <p className="relative mt-1.5 text-[13px] font-medium text-[#C8C6E0]">
+            Buy and sell useful things within your campus.
+          </p>
 
-          {/* SEARCH */}
-          <div className="mt-6 flex h-12 items-center gap-3 rounded-[16px] border border-[#E1DDD4] bg-[#FFFDF9] px-4 shadow-[0_3px_14px_rgba(23,32,68,0.035)] focus-within:border-[#B8ACE4]">
-            <Search
-              size={18}
-              className="shrink-0 text-[#8A8C9A]"
-              strokeWidth={1.8}
-            />
+          {/* SEARCH — inside hero */}
+          <div className="relative mt-6 flex h-12 items-center gap-3 rounded-[16px] bg-white px-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+            <Search size={18} className="shrink-0 text-[#5E4BD1]" strokeWidth={1.8} />
 
             <input
               value={query}
@@ -95,27 +96,27 @@ export default function MarketplacePage() {
             </button>
           </div>
 
-          {/* CATEGORIES */}
-          <nav className="mt-5 flex gap-2 overflow-x-auto no-scrollbar">
+          {/* CATEGORY PILLS — inside hero, light variant for contrast */}
+          <nav className="relative mt-4 flex gap-2 overflow-x-auto no-scrollbar">
             {categories.map(([id, label]) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => setCategory(id)}
-                className={`flex h-9 shrink-0 items-center rounded-full border px-4 text-[12px] font-semibold transition-colors ${
+                className={`flex h-9 shrink-0 items-center rounded-full px-4 text-[12px] font-semibold transition-colors ${
                   category === id
-                    ? "border-[#D8CCF4] bg-[#F0EBFF] text-[#5944C7]"
-                    : "border-[#E3DFD6] bg-[#FFFDF9] text-[#6F7280] hover:bg-white"
+                    ? "bg-white text-[#20265F]"
+                    : "bg-white/10 text-[#DCD6FF] hover:bg-white/15"
                 }`}
               >
                 {label}
               </button>
             ))}
           </nav>
-        </div>
+        </section>
 
         {/* LISTINGS */}
-        <section className="px-5 pb-16 pt-8 sm:px-8">
+        <section className="px-5 pb-16 pt-6 sm:px-8">
 
           {/* SECTION HEADER */}
           <div className="mb-5 flex items-end justify-between">
@@ -187,17 +188,13 @@ export default function MarketplacePage() {
                         aria-label="Save listing"
                         className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#FFFDF9]/95 text-[#343A56] shadow-[0_2px_9px_rgba(23,32,68,0.09)]"
                       >
-                        <Heart
-                          size={15}
-                          strokeWidth={1.8}
-                        />
+                        <Heart size={15} strokeWidth={1.8} />
                       </button>
                     </div>
 
                     {/* CARD DETAILS */}
                     <div className="px-3.5 pb-4 pt-3">
                       <div className="flex items-start justify-between gap-2">
-
                         <h3 className="min-w-0 line-clamp-2 text-[12px] font-bold leading-[17px] tracking-[-0.01em] text-[#202540]">
                           {item.title}
                         </h3>
@@ -205,7 +202,6 @@ export default function MarketplacePage() {
                         <span className="shrink-0 text-[12px] font-extrabold text-[#5E4BD1]">
                           ₹{item.price}
                         </span>
-
                       </div>
 
                       {/* CONDITION */}

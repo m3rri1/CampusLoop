@@ -47,7 +47,7 @@ export default function AppNavigation() {
 
       {/* MOBILE BOTTOM NAV */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-3 md:hidden">
-        <div className="mx-auto flex max-w-[430px] items-center justify-around rounded-[20px] border border-[#DEDAD1] bg-[#FFFDF9] px-1.5 py-1.5 shadow-[0_8px_30px_rgba(23,32,68,0.12)]">
+        <div className="mx-auto flex max-w-[430px] items-center justify-around rounded-[22px] border border-[#E7E2D8] bg-white/95 px-1.5 py-1.5 shadow-[0_10px_35px_rgba(23,32,68,0.14)] backdrop-blur-md">
           {items.map((item) => {
             const Icon = item.icon;
             const active =
@@ -59,11 +59,13 @@ export default function AppNavigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[13px] px-2 py-2 transition ${
-                  active ? "bg-[#23265B] text-white" : "text-[#747686]"
+                className={`flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[15px] px-2 py-2 transition ${
+                  active
+                    ? "bg-[#23265B] text-white shadow-[0_3px_10px_rgba(35,38,91,0.3)]"
+                    : "text-[#8A8C99] hover:text-[#23265B]"
                 }`}
               >
-                <Icon size={16} strokeWidth={active ? 2.2 : 1.7} />
+                <Icon size={16} strokeWidth={active ? 2.3 : 1.7} />
                 <span className="text-[8px] font-semibold leading-none">
                   {item.label}
                 </span>
