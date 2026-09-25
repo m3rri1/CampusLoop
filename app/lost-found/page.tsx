@@ -150,9 +150,18 @@ export default function LostFoundPage() {
               className="pointer-events-none absolute -bottom-20 left-10 h-48 w-48 rounded-full bg-[#6654D9]/25 blur-3xl"
             />
 
-            <p className="relative text-[10px] font-bold uppercase tracking-[0.25em] text-[#F3C89A]">
-              Lost &amp; Found
-            </p>
+            <div className="relative flex items-center justify-between gap-3">
+  <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F3C89A]">
+    Lost &amp; Found
+  </p>
+
+  <Link
+    href="/lost-found/my-reports"
+    className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[10px] font-semibold text-white backdrop-blur-sm transition hover:bg-white/15"
+  >
+    My reports
+  </Link>
+</div>
 
             <h1 className="relative mt-2 text-[30px] font-bold leading-[1] tracking-[-0.05em] sm:text-[38px]">
               Find it. Return it.

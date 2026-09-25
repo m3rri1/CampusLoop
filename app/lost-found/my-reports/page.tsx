@@ -215,57 +215,66 @@ export default function MyReportsPage() {
   }
 
   async function handleApprove(claim: Claim, report: Report) {
-    const key = claim.id;
+  const key = claim.id;
 
-    if (report.status === "claimed" || report.status === "returned") {
-      setActionError((prev) => ({
-        ...prev,
-        [key]: "This report has already been resolved.",
-      }));
-      return;
+  if (report.status === "claimed" || report.status === "returned") {
+    setActionError((prev) => ({
+      ...prev,
+      [key]: "This report has already been resolved.",
+    }));
+    return;
+  }
+
+  setActionError((prev) => ({ ...prev, [key]: "" }));
+  setActionLoading((prev) => ({ ...prev, [key]: true }));
+
+  try {
+    const { data: conversationId, error } = await supabase.rpc(
+      "approve_lost_found_claim",
+      {
+        p_claim_id: claim.id,
+      }
+    );
+
+    if (error) {
+      throw new Error(error.message);
     }
 
-    setActionError((prev) => ({ ...prev, [key]: "" }));
-    setActionLoading((prev) => ({ ...prev, [key]: true }));
-
-    const { error: claimUpdateError } = await supabase
-      .from("lost_found_claims")
-      .update({ status: "approved" })
-      .eq("id", claim.id);
-
-    if (claimUpdateError) {
-      setActionLoading((prev) => ({ ...prev, [key]: false }));
-      setActionError((prev) => ({ ...prev, [key]: claimUpdateError.message }));
-      return;
-    }
-
-    const { error: reportUpdateError } = await supabase
-      .from("lost_found_reports")
-      .update({ status: "claimed" })
-      .eq("id", report.id);
-
-    setActionLoading((prev) => ({ ...prev, [key]: false }));
-
-    if (reportUpdateError) {
-      setActionError((prev) => ({
-        ...prev,
-        [key]: `Claim approved, but could not update report status: ${reportUpdateError.message}`,
-      }));
-      // still reflect the claim approval locally
-      setClaims((prev) =>
-        prev.map((c) => (c.id === claim.id ? { ...c, status: "approved" } : c))
-      );
-      return;
+    if (!conversationId) {
+      throw new Error("Claim approved, but the conversation could not be created.");
     }
 
     setClaims((prev) =>
-      prev.map((c) => (c.id === claim.id ? { ...c, status: "approved" } : c))
+      prev.map((c) =>
+        c.id === claim.id ? { ...c, status: "approved" } : c
+      )
     );
+
     setReports((prev) =>
-      prev.map((r) => (r.id === report.id ? { ...r, status: "claimed" } : r))
+      prev.map((r) =>
+        r.id === report.id ? { ...r, status: "claimed" } : r
+      )
     );
-    setJustApproved((prev) => ({ ...prev, [claim.id]: true }));
+
+    setJustApproved((prev) => ({
+      ...prev,
+      [claim.id]: true,
+    }));
+  } catch (error) {
+    setActionError((prev) => ({
+      ...prev,
+      [key]:
+        error instanceof Error
+          ? error.message
+          : "Could not approve this claim.",
+    }));
+  } finally {
+    setActionLoading((prev) => ({
+      ...prev,
+      [key]: false,
+    }));
   }
+}
 
   if (checkingAuth) {
     return (

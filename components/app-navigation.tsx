@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Package, Search, UserRound, Plus } from "lucide-react";
+import { Home, Package, Search, UserRound, MessageCircle, Plus } from "lucide-react";
 
 export default function AppNavigation() {
   const pathname = usePathname();
@@ -16,11 +16,12 @@ export default function AppNavigation() {
   }
 
   const items = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/marketplace", label: "Marketplace", icon: Package },
-    { href: "/lost-found", label: "Lost & Found", icon: Search },
-    { href: "/profile", label: "Profile", icon: UserRound },
-  ];
+  { href: "/", label: "Home", icon: Home },
+  { href: "/marketplace", label: "Marketplace", icon: Package },
+  { href: "/lost-found", label: "Lost & Found", icon: Search },
+  { href: "/chat", label: "Chat", icon: MessageCircle },
+  { href: "/profile", label: "Profile", icon: UserRound },
+];
 
   return (
     <>
@@ -59,7 +60,7 @@ export default function AppNavigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex min-w-[68px] flex-col items-center justify-center gap-1 rounded-[15px] px-2 py-2 transition ${
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[15px] px-2 py-2 transition ${
                   active
                     ? "bg-[#23265B] text-white shadow-[0_3px_10px_rgba(35,38,91,0.3)]"
                     : "text-[#8A8C99] hover:text-[#23265B]"
