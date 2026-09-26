@@ -25,6 +25,15 @@ type Conversation = {
   last_message_at: string;
 };
 
+type MarketplaceConversation = {
+  id: string;
+  listing_id: string;
+  seller_id: string;
+  buyer_id: string;
+  created_at: string;
+  last_message_at: string;
+};
+
 type Message = {
   id: string;
   conversation_id: string;
@@ -42,6 +51,13 @@ type Report = {
   status: "active" | "claimed" | "returned";
 };
 
+type MarketplaceListing = {
+  id: string;
+  title: string;
+  image_url: string | null;
+  status: string;
+};
+
 type Profile = {
   id: string;
   full_name: string | null;
@@ -54,11 +70,21 @@ export default function ChatPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [marketplaceConversations, setMarketplaceConversations] = useState<
+    MarketplaceConversation[]
+  >([]);
+
   const [reports, setReports] = useState<Record<string, Report>>({});
+  const [marketplaceListings, setMarketplaceListings] = useState<
+    Record<string, MarketplaceListing>
+  >({});
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
 
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
+
+  const [selectedMarketplaceConversation, setSelectedMarketplaceConversation] =
+    useState<MarketplaceConversation | null>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState("");
@@ -67,6 +93,10 @@ export default function ChatPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+
+  // =========================================================
+  // LOAD ALL CONVERSATION DATA
+  // =========================================================
 
   async function loadConversationData(currentUserId: string) {
     const { data: conversationData, error: conversationError } =
@@ -81,28 +111,35 @@ export default function ChatPage() {
       throw new Error(conversationError.message);
     }
 
-    const conversationList = (conversationData ?? []) as Conversation[];
+    const { data: marketplaceData, error: marketplaceError } =
+      await supabase
+        .from("marketplace_conversations")
+        .select(
+          "id, listing_id, seller_id, buyer_id, created_at, last_message_at"
+        )
+        .order("last_message_at", { ascending: false });
+
+    if (marketplaceError) {
+      throw new Error(marketplaceError.message);
+    }
+
+    const conversationList =
+      (conversationData ?? []) as Conversation[];
+
+    const marketplaceConversationList =
+      (marketplaceData ?? []) as MarketplaceConversation[];
 
     setConversations(conversationList);
+    setMarketplaceConversations(marketplaceConversationList);
 
-    if (conversationList.length === 0) {
-      return conversationList;
-    }
+    // =======================================================
+    // LOST & FOUND REPORTS
+    // =======================================================
 
     const reportIds = Array.from(
       new Set(
         conversationList.map(
           (conversation) => conversation.report_id
-        )
-      )
-    );
-
-    const partnerIds = Array.from(
-      new Set(
-        conversationList.map((conversation) =>
-          conversation.reporter_id === currentUserId
-            ? conversation.claimant_id
-            : conversation.reporter_id
         )
       )
     );
@@ -128,7 +165,70 @@ export default function ChatPage() {
       });
 
       setReports(reportMap);
+    } else {
+      setReports({});
     }
+
+    // =======================================================
+    // MARKETPLACE LISTINGS
+    // =======================================================
+
+    const listingIds = Array.from(
+      new Set(
+        marketplaceConversationList.map(
+          (conversation) => conversation.listing_id
+        )
+      )
+    );
+
+    if (listingIds.length > 0) {
+      const { data: listingData, error: listingError } =
+        await supabase
+          .from("marketplace_listings")
+          .select("id, title, image_url, status")
+          .in("id", listingIds);
+
+      if (listingError) {
+        throw new Error(listingError.message);
+      }
+
+      const listingMap: Record<string, MarketplaceListing> =
+        {};
+
+      (listingData ?? []).forEach((listing) => {
+        const item = listing as MarketplaceListing;
+        listingMap[item.id] = item;
+      });
+
+      setMarketplaceListings(listingMap);
+    } else {
+      setMarketplaceListings({});
+    }
+
+    // =======================================================
+    // PARTNER PROFILES
+    // =======================================================
+
+    const lostFoundPartnerIds = conversationList.map(
+      (conversation) =>
+        conversation.reporter_id === currentUserId
+          ? conversation.claimant_id
+          : conversation.reporter_id
+    );
+
+    const marketplacePartnerIds = marketplaceConversationList.map(
+      (conversation) =>
+        conversation.seller_id === currentUserId
+          ? conversation.buyer_id
+          : conversation.seller_id
+    );
+
+    const partnerIds = Array.from(
+      new Set([
+        ...lostFoundPartnerIds,
+        ...marketplacePartnerIds,
+      ])
+    );
 
     if (partnerIds.length > 0) {
       const { data: profileData, error: profileError } =
@@ -149,12 +249,22 @@ export default function ChatPage() {
       });
 
       setProfiles(profileMap);
+    } else {
+      setProfiles({});
     }
 
-    return conversationList;
+    return {
+      conversationList,
+      marketplaceConversationList,
+    };
   }
 
+  // =========================================================
+  // OPEN LOST & FOUND CONVERSATION
+  // =========================================================
+
   async function openConversation(conversation: Conversation) {
+    setSelectedMarketplaceConversation(null);
     setSelectedConversation(conversation);
     setMessages([]);
     setError("");
@@ -177,6 +287,40 @@ export default function ChatPage() {
     setMessagesLoading(false);
   }
 
+  // =========================================================
+  // OPEN MARKETPLACE CONVERSATION
+  // =========================================================
+
+  async function openMarketplaceConversation(
+    conversation: MarketplaceConversation
+  ) {
+    setSelectedConversation(null);
+    setSelectedMarketplaceConversation(conversation);
+    setMessages([]);
+    setError("");
+    setMessagesLoading(true);
+
+    const { data, error: messageError } = await supabase
+      .from("marketplace_messages")
+      .select(
+        "id, conversation_id, sender_id, body, created_at"
+      )
+      .eq("conversation_id", conversation.id)
+      .order("created_at", { ascending: true });
+
+    if (messageError) {
+      setError(messageError.message);
+    } else {
+      setMessages((data ?? []) as Message[]);
+    }
+
+    setMessagesLoading(false);
+  }
+
+  // =========================================================
+  // INITIALIZE
+  // =========================================================
+
   useEffect(() => {
     let mounted = true;
 
@@ -198,12 +342,58 @@ export default function ChatPage() {
 
         setUserId(user.id);
 
-        const conversationList =
-          await loadConversationData(user.id);
+        const {
+          conversationList,
+          marketplaceConversationList,
+        } = await loadConversationData(user.id);
 
         if (!mounted) return;
 
-       
+        // ---------------------------------------------------
+        // OPEN A SPECIFIC CHAT ONLY WHEN URL REQUESTS IT
+        // ---------------------------------------------------
+
+        const params = new URLSearchParams(
+          window.location.search
+        );
+
+        const requestedType = params.get("type");
+        const requestedConversation =
+          params.get("conversation");
+
+        if (requestedConversation) {
+          if (requestedType === "marketplace") {
+            const marketplaceConversation =
+              marketplaceConversationList.find(
+                (conversation) =>
+                  conversation.id === requestedConversation
+              );
+
+            if (marketplaceConversation) {
+              await openMarketplaceConversation(
+                marketplaceConversation
+              );
+            } else {
+              setError(
+                "That marketplace conversation could not be found."
+              );
+            }
+          } else {
+            const lostFoundConversation =
+              conversationList.find(
+                (conversation) =>
+                  conversation.id === requestedConversation
+              );
+
+            if (lostFoundConversation) {
+              await openConversation(lostFoundConversation);
+            } else {
+              setError(
+                "That conversation could not be found."
+              );
+            }
+          }
+        }
       } catch (error) {
         if (!mounted) return;
 
@@ -226,18 +416,40 @@ export default function ChatPage() {
     };
   }, [router, supabase]);
 
+  // =========================================================
+  // REALTIME
+  // =========================================================
+
   useEffect(() => {
-    if (!selectedConversation) return;
+    if (
+      !selectedConversation &&
+      !selectedMarketplaceConversation
+    ) {
+      return;
+    }
+
+    const isMarketplace =
+      !!selectedMarketplaceConversation;
+
+    const conversationId = isMarketplace
+      ? selectedMarketplaceConversation.id
+      : selectedConversation!.id;
+
+    const table = isMarketplace
+      ? "marketplace_messages"
+      : "messages";
 
     const channel = supabase
-      .channel(`campusloop-chat-${selectedConversation.id}`)
+      .channel(
+        `${isMarketplace ? "marketplace" : "campusloop"}-chat-${conversationId}`
+      )
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${selectedConversation.id}`,
+          table,
+          filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
           const incoming = payload.new as Message;
@@ -260,16 +472,25 @@ export default function ChatPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedConversation, supabase]);
+  }, [
+    selectedConversation,
+    selectedMarketplaceConversation,
+    supabase,
+  ]);
+
+  // =========================================================
+  // SEND MESSAGE
+  // =========================================================
 
   async function sendMessage() {
     const body = messageText.trim();
 
     if (
       !body ||
-      !selectedConversation ||
       !userId ||
-      sending
+      sending ||
+      (!selectedConversation &&
+        !selectedMarketplaceConversation)
     ) {
       return;
     }
@@ -277,10 +498,21 @@ export default function ChatPage() {
     setSending(true);
     setError("");
 
+    const isMarketplace =
+      !!selectedMarketplaceConversation;
+
+    const conversationId = isMarketplace
+      ? selectedMarketplaceConversation.id
+      : selectedConversation!.id;
+
+    const table = isMarketplace
+      ? "marketplace_messages"
+      : "messages";
+
     const { data, error: insertError } = await supabase
-      .from("messages")
+      .from(table)
       .insert({
-        conversation_id: selectedConversation.id,
+        conversation_id: conversationId,
         sender_id: userId,
         body,
       })
@@ -295,11 +527,6 @@ export default function ChatPage() {
       return;
     }
 
-    /*
-     * Realtime normally adds the message automatically.
-     * This fallback prevents a visible delay if realtime takes
-     * a moment to deliver the INSERT event.
-     */
     if (data) {
       const newMessage = data as Message;
 
@@ -316,9 +543,30 @@ export default function ChatPage() {
       });
     }
 
+    // Update the correct conversation timestamp.
+    if (isMarketplace) {
+      await supabase
+        .from("marketplace_conversations")
+        .update({
+          last_message_at: new Date().toISOString(),
+        })
+        .eq("id", conversationId);
+    } else {
+      await supabase
+        .from("conversations")
+        .update({
+          last_message_at: new Date().toISOString(),
+        })
+        .eq("id", conversationId);
+    }
+
     setMessageText("");
     setSending(false);
   }
+
+  // =========================================================
+  // LOST & FOUND HELPERS
+  // =========================================================
 
   function partnerId(conversation: Conversation) {
     return conversation.reporter_id === userId
@@ -336,6 +584,38 @@ export default function ChatPage() {
   function reportFor(conversation: Conversation) {
     return reports[conversation.report_id];
   }
+
+  // =========================================================
+  // MARKETPLACE HELPERS
+  // =========================================================
+
+  function marketplacePartnerId(
+    conversation: MarketplaceConversation
+  ) {
+    return conversation.seller_id === userId
+      ? conversation.buyer_id
+      : conversation.seller_id;
+  }
+
+  function marketplacePartnerName(
+    conversation: MarketplaceConversation
+  ) {
+    return (
+      profiles[
+        marketplacePartnerId(conversation)
+      ]?.full_name || "CampusLoop student"
+    );
+  }
+
+  function listingFor(
+    conversation: MarketplaceConversation
+  ) {
+    return marketplaceListings[conversation.listing_id];
+  }
+
+  // =========================================================
+  // FORMATTING
+  // =========================================================
 
   function formatConversationDate(date: string) {
     const parsed = new Date(date);
@@ -361,28 +641,61 @@ export default function ChatPage() {
     });
   }
 
+  // =========================================================
+  // SELECTED CHAT DATA
+  // =========================================================
+
   const selectedReport = selectedConversation
     ? reportFor(selectedConversation)
     : null;
 
+  const selectedListing =
+    selectedMarketplaceConversation
+      ? listingFor(selectedMarketplaceConversation)
+      : null;
+
   const selectedPartner = selectedConversation
     ? partnerName(selectedConversation)
-    : "";
+    : selectedMarketplaceConversation
+      ? marketplacePartnerName(
+          selectedMarketplaceConversation
+        )
+      : "";
+
+  const selectedTitle = selectedConversation
+    ? selectedReport?.title || "Lost & Found item"
+    : selectedMarketplaceConversation
+      ? selectedListing?.title || "Marketplace item"
+      : "";
 
   const isSelectedLostFound =
     !!selectedConversation && !!selectedReport;
 
+  const isSelectedMarketplace =
+    !!selectedMarketplaceConversation && !!selectedListing;
+
   const canUseHandover =
     isSelectedLostFound &&
+    !!selectedReport &&
     selectedReport.status !== "active";
 
-  const conversationCount = conversations.length;
+  const conversationCount =
+    conversations.length +
+    marketplaceConversations.length;
 
   const emptyMessage = useMemo(() => {
     return conversationCount === 0
-      ? "Approved Lost & Found claims will create private chats here."
+      ? "Approved Lost & Found claims and marketplace chats will appear here."
       : "Select a conversation to start messaging.";
   }, [conversationCount]);
+
+  const hasAnyConversations =
+    conversations.length > 0 ||
+    marketplaceConversations.length > 0;
+
+  // =========================================================
+  // LOADING
+  // =========================================================
 
   if (loading) {
     return (
@@ -391,6 +704,7 @@ export default function ChatPage() {
           <div className="flex min-h-[70vh] items-center justify-center px-6">
             <div className="text-center">
               <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-[#DDD7F7] border-t-[#5D48D2]" />
+
               <p className="mt-4 text-[11px] font-semibold text-[#777A8B]">
                 Loading chats...
               </p>
@@ -405,7 +719,10 @@ export default function ChatPage() {
     <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
       <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] pb-[82px]">
 
-        {/* MOBILE / DESKTOP PAGE TITLE */}
+        {/* ==================================================
+            PAGE TITLE
+        ================================================== */}
+
         <section className="border-b border-[#E5E1D8] bg-[#FBF9F4] px-5 py-5 sm:px-8">
           <div className="mx-auto flex max-w-5xl items-center justify-between">
             <div>
@@ -428,6 +745,8 @@ export default function ChatPage() {
           </div>
         </section>
 
+        {/* ERROR */}
+
         {error && (
           <div className="mx-auto max-w-5xl px-5 pt-4 sm:px-8">
             <div className="rounded-[14px] border border-[#F0CACA] bg-[#FFF4F4] px-4 py-3 text-[11px] leading-5 text-[#A33A3A]">
@@ -436,18 +755,26 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* MAIN CHAT AREA */}
+        {/* ==================================================
+            MAIN CHAT AREA
+        ================================================== */}
+
         <div className="mx-auto mt-4 flex max-w-5xl overflow-hidden border-y border-[#E5E1D8] bg-white md:min-h-[650px] md:rounded-[22px] md:border">
 
-          {/* ================================================== */}
-          {/* CONVERSATION LIST */}
-          {/* ================================================== */}
+          {/* ==================================================
+              CONVERSATION LIST
+          ================================================== */}
 
           <aside
             className={`w-full shrink-0 bg-white md:block md:w-[330px] md:border-r md:border-[#E5E1D8] ${
-              selectedConversation ? "hidden" : "block"
+              selectedConversation ||
+              selectedMarketplaceConversation
+                ? "hidden"
+                : "block"
             }`}
           >
+            {/* LIST HEADER */}
+
             <div className="border-b border-[#EEEAE2] px-5 py-4">
               <div className="flex items-center justify-between">
                 <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#858796]">
@@ -462,7 +789,7 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {conversations.length === 0 ? (
+            {!hasAnyConversations ? (
               <div className="flex min-h-[480px] flex-col items-center justify-center px-8 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#EEE9FF] text-[#5D48D2]">
                   <MessageCircle size={23} />
@@ -477,87 +804,201 @@ export default function ChatPage() {
                 </p>
 
                 <Link
-                  href="/lost-found"
+                  href="/marketplace"
                   className="mt-5 flex h-10 items-center justify-center rounded-[12px] bg-[#292B68] px-4 text-[10.5px] font-bold text-white"
                 >
-                  Browse Lost &amp; Found
+                  Browse marketplace
                 </Link>
               </div>
             ) : (
               <div>
-                {conversations.map((conversation) => {
-                  const report = reportFor(conversation);
-                  const name = partnerName(conversation);
-                  const active =
-                    selectedConversation?.id ===
-                    conversation.id;
 
-                  return (
-                    <button
-                      key={conversation.id}
-                      type="button"
-                      onClick={() =>
-                        openConversation(conversation)
-                      }
-                      className={`flex w-full items-center gap-3 border-b border-[#F0ECE5] px-5 py-4 text-left transition ${
-                        active
-                          ? "bg-[#F3F0FF]"
-                          : "bg-white hover:bg-[#FAF8F3]"
-                      }`}
-                    >
-                      {/* ITEM IMAGE */}
-                      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#EEE9FF] text-[#5D48D2]">
-                        {report?.image_url ? (
-                          <img
-                            src={report.image_url}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <Package size={18} />
-                        )}
-                      </div>
+                {/* ==================================================
+                    LOST & FOUND
+                ================================================== */}
 
-                      {/* TEXT */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-[12px] font-bold text-[#172044]">
-                            {name}
-                          </p>
+                {conversations.length > 0 && (
+                  <>
+                    <div className="border-b border-[#F0ECE5] bg-[#FAF8F3] px-5 py-3">
+                      <p className="text-[8px] font-bold uppercase tracking-[0.17em] text-[#858796]">
+                        Lost &amp; Found
+                      </p>
+                    </div>
 
-                          <span className="shrink-0 text-[8px] text-[#A0A0AA]">
-                            {formatConversationDate(
-                              conversation.last_message_at
+                    {conversations.map((conversation) => {
+                      const report =
+                        reportFor(conversation);
+
+                      const name =
+                        partnerName(conversation);
+
+                      const active =
+                        selectedConversation?.id ===
+                        conversation.id;
+
+                      return (
+                        <button
+                          key={conversation.id}
+                          type="button"
+                          onClick={() =>
+                            openConversation(conversation)
+                          }
+                          className={`flex w-full items-center gap-3 border-b border-[#F0ECE5] px-5 py-4 text-left transition ${
+                            active
+                              ? "bg-[#F3F0FF]"
+                              : "bg-white hover:bg-[#FAF8F3]"
+                          }`}
+                        >
+                          {/* IMAGE */}
+
+                          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#EEE9FF] text-[#5D48D2]">
+                            {report?.image_url ? (
+                              <img
+                                src={report.image_url}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <Package size={18} />
                             )}
-                          </span>
-                        </div>
+                          </div>
 
-                        <p className="mt-1 truncate text-[10px] font-bold text-[#5D48D2]">
-                          {report?.title || "Lost & Found item"}
-                        </p>
+                          {/* TEXT */}
 
-                        <p className="mt-0.5 truncate text-[9px] text-[#858796]">
-                          Lost &amp; Found handover
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="truncate text-[12px] font-bold text-[#172044]">
+                                {name}
+                              </p>
+
+                              <span className="shrink-0 text-[8px] text-[#A0A0AA]">
+                                {formatConversationDate(
+                                  conversation.last_message_at
+                                )}
+                              </span>
+                            </div>
+
+                            <p className="mt-1 truncate text-[10px] font-bold text-[#5D48D2]">
+                              {report?.title ||
+                                "Lost & Found item"}
+                            </p>
+
+                            <p className="mt-0.5 truncate text-[9px] text-[#858796]">
+                              Lost &amp; Found handover
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+
+                {/* ==================================================
+                    MARKETPLACE
+                ================================================== */}
+
+                {marketplaceConversations.length > 0 && (
+                  <>
+                    <div className="border-b border-[#F0ECE5] bg-[#FAF8F3] px-5 py-3">
+                      <p className="text-[8px] font-bold uppercase tracking-[0.17em] text-[#858796]">
+                        Marketplace
+                      </p>
+                    </div>
+
+                    {marketplaceConversations.map(
+                      (conversation) => {
+                        const listing =
+                          listingFor(conversation);
+
+                        const name =
+                          marketplacePartnerName(
+                            conversation
+                          );
+
+                        const active =
+                          selectedMarketplaceConversation?.id ===
+                          conversation.id;
+
+                        return (
+                          <button
+                            key={conversation.id}
+                            type="button"
+                            onClick={() =>
+                              openMarketplaceConversation(
+                                conversation
+                              )
+                            }
+                            className={`flex w-full items-center gap-3 border-b border-[#F0ECE5] px-5 py-4 text-left transition ${
+                              active
+                                ? "bg-[#F3F0FF]"
+                                : "bg-white hover:bg-[#FAF8F3]"
+                            }`}
+                          >
+                            {/* IMAGE */}
+
+                            <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[15px] bg-[#EEE9FF] text-[#5D48D2]">
+                              {listing?.image_url ? (
+                                <img
+                                  src={listing.image_url}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Package size={18} />
+                              )}
+                            </div>
+
+                            {/* TEXT */}
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="truncate text-[12px] font-bold text-[#172044]">
+                                  {name}
+                                </p>
+
+                                <span className="shrink-0 text-[8px] text-[#A0A0AA]">
+                                  {formatConversationDate(
+                                    conversation.last_message_at
+                                  )}
+                                </span>
+                              </div>
+
+                              <p className="mt-1 truncate text-[10px] font-bold text-[#5D48D2]">
+                                {listing?.title ||
+                                  "Marketplace item"}
+                              </p>
+
+                              <p className="mt-0.5 truncate text-[9px] text-[#858796]">
+                                Marketplace conversation
+                              </p>
+                            </div>
+                          </button>
+                        );
+                      }
+                    )}
+                  </>
+                )}
               </div>
             )}
           </aside>
 
-          {/* ================================================== */}
-          {/* CHAT PANEL */}
-          {/* ================================================== */}
+          {/* ==================================================
+              CHAT PANEL
+          ================================================== */}
 
           <section
             className={`min-w-0 flex-1 flex-col bg-[#FCFBF8] ${
-              selectedConversation ? "flex" : "hidden md:flex"
+              selectedConversation ||
+              selectedMarketplaceConversation
+                ? "flex"
+                : "hidden md:flex"
             }`}
           >
-            {!selectedConversation ? (
-              /* DESKTOP EMPTY STATE */
+
+            {/* EMPTY DESKTOP STATE */}
+
+            {!selectedConversation &&
+            !selectedMarketplaceConversation ? (
               <div className="hidden flex-1 items-center justify-center text-center md:flex">
                 <div className="px-8">
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[18px] bg-[#F0EDF8] text-[#7D7A90]">
@@ -575,26 +1016,40 @@ export default function ChatPage() {
               </div>
             ) : (
               <>
-                {/* ================================================== */}
-                {/* CHAT HEADER */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    CHAT HEADER
+                ================================================== */}
 
                 <header className="border-b border-[#E5E1D8] bg-white">
                   <div className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
 
+                    {/* MOBILE BACK */}
+
                     <button
                       type="button"
-                      onClick={() =>
-                        setSelectedConversation(null)
-                      }
+                      onClick={() => {
+                        setSelectedConversation(null);
+                        setSelectedMarketplaceConversation(
+                          null
+                        );
+                      }}
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#555A6D] hover:bg-[#F4F1EA] md:hidden"
                       aria-label="Back to conversations"
                     >
                       <ChevronLeft size={19} />
                     </button>
 
+                    {/* IMAGE */}
+
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[13px] bg-[#EEE9FF] text-[#5D48D2]">
-                      {selectedReport?.image_url ? (
+                      {isSelectedMarketplace &&
+                      selectedListing?.image_url ? (
+                        <img
+                          src={selectedListing.image_url}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : selectedReport?.image_url ? (
                         <img
                           src={selectedReport.image_url}
                           alt=""
@@ -605,32 +1060,37 @@ export default function ChatPage() {
                       )}
                     </div>
 
+                    {/* NAME */}
+
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[12px] font-bold text-[#172044]">
                         {selectedPartner}
                       </p>
 
                       <p className="truncate text-[10px] text-[#6952D7]">
-                        {selectedReport?.title ||
-                          "Lost & Found"}
+                        {selectedTitle}
                       </p>
                     </div>
 
-                    {/* SECURE HANDOVER */}
-                    {canUseHandover && (
-                      <Link
-                        href={`/lost-found/${selectedConversation.report_id}/verify`}
-                        className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#DAD1FF] bg-[#F3F0FF] px-3 py-2 text-[9px] font-bold text-[#5D48D2]"
-                      >
-                        <ShieldCheck size={12} />
-                        <span>
-  Secure handover
-</span>
-                      </Link>
-                    )}
+                    {/* LOST & FOUND HANDOVER */}
+
+                    {canUseHandover &&
+                      selectedConversation && (
+                        <Link
+                          href={`/lost-found/${selectedConversation.report_id}/verify`}
+                          className="flex shrink-0 items-center gap-1.5 rounded-full border border-[#DAD1FF] bg-[#F3F0FF] px-3 py-2 text-[9px] font-bold text-[#5D48D2]"
+                        >
+                          <ShieldCheck size={12} />
+
+                          <span>
+                            Secure handover
+                          </span>
+                        </Link>
+                      )}
                   </div>
 
-                  {/* ITEM CONTEXT STRIP */}
+                  {/* CONTEXT STRIP */}
+
                   <div className="border-t border-[#F0ECE5] bg-[#FAF8F3] px-4 py-2.5 sm:px-5">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-2">
@@ -642,27 +1102,32 @@ export default function ChatPage() {
                         <p className="truncate text-[9px] text-[#6F7384]">
                           This conversation is about a{" "}
                           <span className="font-bold text-[#4A4E63]">
-                            Lost &amp; Found item
+                            {isSelectedMarketplace
+                              ? "Marketplace listing"
+                              : "Lost & Found item"}
                           </span>
                         </p>
                       </div>
 
                       <span className="shrink-0 rounded-full bg-[#EAF6ED] px-2 py-1 text-[7px] font-bold uppercase tracking-[0.12em] text-[#287A47]">
-                        Approved
+                        {isSelectedMarketplace
+                          ? "BUY / SELL"
+                          : "APPROVED"}
                       </span>
                     </div>
                   </div>
                 </header>
 
-                {/* ================================================== */}
-                {/* MESSAGES */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    MESSAGES
+                ================================================== */}
 
                 <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
                   {messagesLoading ? (
                     <div className="flex min-h-[400px] items-center justify-center">
                       <div className="text-center">
                         <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-[#DDD7F7] border-t-[#5D48D2]" />
+
                         <p className="mt-3 text-[10px] text-[#858796]">
                           Loading messages...
                         </p>
@@ -680,16 +1145,17 @@ export default function ChatPage() {
                         </h2>
 
                         <p className="mx-auto mt-1 max-w-[250px] text-[10.5px] leading-5 text-[#858796]">
-                          Arrange a safe campus handover with{" "}
-                          <span className="font-semibold text-[#596075]">
-                            {selectedPartner}
-                          </span>
-                          .
+                          {isSelectedMarketplace
+                            ? `Ask ${selectedPartner} about this listing.`
+                            : `Arrange a safe campus handover with ${selectedPartner}.`}
                         </p>
 
                         <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#F5F2FF] px-3 py-1.5 text-[8px] font-semibold text-[#6952D7]">
                           <ShieldCheck size={11} />
-                          Keep personal information private
+
+                          {isSelectedMarketplace
+                            ? "Keep personal information private"
+                            : "Arrange handovers safely"}
                         </div>
                       </div>
                     </div>
@@ -754,9 +1220,9 @@ export default function ChatPage() {
                   )}
                 </div>
 
-                {/* ================================================== */}
-                {/* COMPOSER */}
-                {/* ================================================== */}
+                {/* ==================================================
+                    COMPOSER
+                ================================================== */}
 
                 <div className="border-t border-[#E5E1D8] bg-white px-3.5 py-3 sm:px-4">
                   <div className="flex items-end gap-2">
