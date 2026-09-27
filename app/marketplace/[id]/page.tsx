@@ -79,6 +79,9 @@ export default function ItemDetailPage() {
   const [supabase] = useState(() => createClient());
 
   const viewedListingRef = useRef<string | null>(null);
+  const shareMessageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [seller, setSeller] = useState<Profile | null>(null);
@@ -86,6 +89,7 @@ export default function ItemDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [shareMessage, setShareMessage] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -186,6 +190,10 @@ export default function ItemDetailPage() {
 
     return () => {
       mounted = false;
+
+      if (shareMessageTimeoutRef.current) {
+        clearTimeout(shareMessageTimeoutRef.current);
+      }
     };
   }, [id, supabase]);
 
@@ -232,6 +240,60 @@ export default function ItemDetailPage() {
     }
 
     setIsFavorite(true);
+  }
+
+  async function handleShare() {
+    if (!listing) return;
+
+    setError("");
+
+    const shareUrl = window.location.href;
+    const shareTitle = listing.title;
+    const shareText = `${listing.title} — ₹${Number(
+      listing.price
+    ).toLocaleString("en-IN")} on CampusLoop`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+
+        showShareMessage("Shared");
+        return;
+      }
+
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        showShareMessage("Link copied");
+        return;
+      }
+
+      window.prompt("Copy this listing link:", shareUrl);
+    } catch (shareError) {
+      if (
+        shareError instanceof DOMException &&
+        shareError.name === "AbortError"
+      ) {
+        return;
+      }
+
+      setError("Could not share this listing. Please try again.");
+    }
+  }
+
+  function showShareMessage(message: string) {
+    setShareMessage(message);
+
+    if (shareMessageTimeoutRef.current) {
+      clearTimeout(shareMessageTimeoutRef.current);
+    }
+
+    shareMessageTimeoutRef.current = setTimeout(() => {
+      setShareMessage("");
+    }, 2200);
   }
 
   async function handleChatWithSeller() {
@@ -356,9 +418,16 @@ export default function ItemDetailPage() {
             Marketplace
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="relative flex items-center gap-2">
+            {shareMessage && (
+              <span className="absolute right-0 top-11 z-10 whitespace-nowrap rounded-full border border-[#E3DFD7] bg-white px-3 py-1.5 text-[10px] font-bold text-[#6546D9] shadow-[0_5px_18px_rgba(23,32,68,0.08)]">
+                {shareMessage}
+              </span>
+            )}
+
             <button
               type="button"
+              onClick={handleShare}
               aria-label="Share listing"
               className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1E2E6] bg-white text-[#4D5870] transition-colors hover:border-[#CFC5F4] hover:text-[#6546D9]"
             >
