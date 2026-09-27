@@ -6,9 +6,9 @@ import {
   Home,
   ShoppingBag,
   Search,
-  UserRound,
   MessageCircle,
   CalendarDays,
+  Wrench,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -18,8 +18,8 @@ const items = [
   { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
   { href: "/lost-found", label: "Lost & Found", icon: Search },
   { href: "/rent", label: "Rent", icon: CalendarDays },
+  { href: "/services", label: "Services", icon: Wrench },
   { href: "/chat", label: "Chat", icon: MessageCircle },
-  { href: "/profile", label: "Profile", icon: UserRound },
 ];
 
 export default function AppNavigation() {
@@ -37,10 +37,15 @@ export default function AppNavigation() {
       return;
     }
 
-    const { data, error } = await supabase.rpc("get_unread_chat_count");
+    const { data, error } = await supabase.rpc(
+      "get_unread_chat_count"
+    );
 
     if (error) {
-      console.error("Error loading unread chat count:", error);
+      console.error(
+        "Error loading unread chat count:",
+        error
+      );
       return;
     }
 
@@ -54,7 +59,10 @@ export default function AppNavigation() {
       loadUnreadCount();
     };
 
-    window.addEventListener("chat-unread-refresh", refreshHandler);
+    window.addEventListener(
+      "chat-unread-refresh",
+      refreshHandler
+    );
 
     const channel = supabase
       .channel("chat-unread-badge")
@@ -97,21 +105,26 @@ export default function AppNavigation() {
       .subscribe();
 
     return () => {
-      window.removeEventListener("chat-unread-refresh", refreshHandler);
+      window.removeEventListener(
+        "chat-unread-refresh",
+        refreshHandler
+      );
+
       supabase.removeChannel(channel);
     };
   }, [supabase]);
 
-  // Keep the old navigation on desktop if your layout already handles it elsewhere.
-  // This component is primarily the mobile bottom navigation.
   return (
-    <nav className="fixed bottom-3 left-1/2 z-50 w-[calc(100%-24px)] max-w-[430px] -translate-x-1/2 rounded-[22px] border border-[#E3DFD7] bg-white/95 px-2 py-2 shadow-[0_10px_35px_rgba(23,32,68,0.12)] backdrop-blur md:hidden">
+    <nav className="fixed bottom-3 left-1/2 z-50 w-[calc(100%-24px)] max-w-[520px] -translate-x-1/2 rounded-[22px] border border-[#E3DFD7] bg-white/95 px-2 py-2 shadow-[0_10px_35px_rgba(23,32,68,0.12)] backdrop-blur md:hidden">
       <div className="grid grid-cols-6 items-center">
+
         {items.map((item) => {
           const Icon = item.icon;
+
           const active =
             pathname === item.href ||
-            (item.href !== "/" && pathname.startsWith(`${item.href}/`));
+            (item.href !== "/" &&
+              pathname.startsWith(`${item.href}/`));
 
           const isChat = item.href === "/chat";
 
@@ -123,21 +136,30 @@ export default function AppNavigation() {
             >
               <div
                 className={`relative flex h-7 w-7 items-center justify-center rounded-full transition ${
-                  active ? "bg-[#F0ECFF] text-[#5D48D2]" : "text-[#858796]"
+                  active
+                    ? "bg-[#F0ECFF] text-[#5D48D2]"
+                    : "text-[#858796]"
                 }`}
               >
-                <Icon size={16} strokeWidth={active ? 2 : 1.7} />
+                <Icon
+                  size={16}
+                  strokeWidth={active ? 2 : 1.7}
+                />
 
                 {isChat && unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex min-w-[15px] h-[15px] items-center justify-center rounded-full bg-[#6350D8] px-1 text-[8px] font-bold leading-none text-white ring-2 ring-white">
-                    {unreadCount > 99 ? "99+" : unreadCount}
+                  <span className="absolute -right-1 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#6350D8] px-1 text-[8px] font-bold leading-none text-white ring-2 ring-white">
+                    {unreadCount > 99
+                      ? "99+"
+                      : unreadCount}
                   </span>
                 )}
               </div>
 
               <span
                 className={`truncate text-[8px] font-medium ${
-                  active ? "text-[#5D48D2]" : "text-[#858796]"
+                  active
+                    ? "text-[#5D48D2]"
+                    : "text-[#858796]"
                 }`}
               >
                 {item.label}
@@ -145,6 +167,7 @@ export default function AppNavigation() {
             </Link>
           );
         })}
+
       </div>
     </nav>
   );

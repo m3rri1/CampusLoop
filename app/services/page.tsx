@@ -8,6 +8,7 @@ import {
   Camera,
   Code2,
   Image as ImageIcon,
+  MapPin,
   Palette,
   Search,
   Star,
@@ -116,7 +117,7 @@ function formatPricing(service: Service) {
 }
 
 export default function ServicesPage() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [services, setServices] = useState<Service[]>([]);
   const [providers, setProviders] = useState<Record<string, Provider>>({});
@@ -147,6 +148,7 @@ export default function ServicesPage() {
     }
 
     const serviceRows = (data ?? []) as Service[];
+
     setServices(serviceRows);
 
     const providerIds = [
@@ -160,7 +162,10 @@ export default function ServicesPage() {
         .in("id", providerIds);
 
       if (profileError) {
-        console.error("Error loading service providers:", profileError);
+        console.error(
+          "Error loading service providers:",
+          profileError
+        );
       } else {
         const providerMap: Record<string, Provider> = {};
 
@@ -182,7 +187,8 @@ export default function ServicesPage() {
 
     return services.filter((service) => {
       const matchesCategory =
-        activeCategory === "all" || service.category === activeCategory;
+        activeCategory === "all" ||
+        service.category === activeCategory;
 
       if (!matchesCategory) return false;
 
@@ -207,111 +213,119 @@ export default function ServicesPage() {
   }, [services, providers, search, activeCategory]);
 
   return (
-    <main className="min-h-screen bg-[#f6f7f9]">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-[#101827] text-white">
-        <div className="mx-auto max-w-7xl px-5 pb-20 pt-9 md:px-8 md:pb-24 md:pt-14">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-xs font-medium text-white/75">
+    <main className="min-h-screen bg-[#F5F3ED] text-[#17151C]">
+      {/* HERO */}
+      <section className="relative overflow-hidden rounded-b-[38px] bg-[linear-gradient(135deg,#202660_0%,#292D74_46%,#4C43A8_100%)] text-white">
+        {/* Decorative circles */}
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full border border-white/[0.08]" />
+        <div className="pointer-events-none absolute right-[-5px] top-[72px] h-40 w-40 rounded-full border border-white/[0.07]" />
+        <div className="pointer-events-none absolute left-[52%] top-[48%] h-36 w-36 rounded-full bg-[#8A80E8]/10 blur-3xl" />
+
+        <div className="relative mx-auto max-w-6xl px-5 pb-7 pt-7 md:px-8 md:pb-10 md:pt-10">
+          {/* Top row */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3 py-1.5 text-[10px] font-semibold text-white/85">
               <Wrench className="h-3.5 w-3.5" />
               Student Services
             </div>
 
-            <h1 className="mt-5 max-w-2xl text-[2rem] font-semibold leading-[1.08] tracking-[-0.035em] md:text-5xl">
-              Skills, help and services from your campus.
+            <Link
+              href="/services/my-services"
+              className="inline-flex h-9 items-center rounded-full border border-white/15 bg-white/[0.08] px-4 text-[11px] font-semibold text-white transition hover:bg-white/[0.13]"
+            >
+              My services
+            </Link>
+          </div>
+
+          {/* Heading */}
+          <div className="mt-5 max-w-2xl">
+            <h1 className="max-w-xl text-[31px] font-semibold leading-[1.08] tracking-[-0.035em] md:text-5xl">
+              Skills, help and
+              <br />
+              services from your campus.
             </h1>
 
-            <p className="mt-4 max-w-xl text-sm leading-6 text-white/60 md:text-base">
-              Find students who can teach, design, edit, code, photograph,
-              create notes and more.
+            <p className="mt-3 max-w-xl text-[12px] leading-5 text-white/68 md:text-sm md:leading-6">
+              Find students who can teach, design, edit, code,
+              photograph, create notes and more.
             </p>
+          </div>
 
-            <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
-              <Link
-                href="/services/list"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-[#101827] transition hover:bg-white/90"
-              >
-                Offer a service
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+          {/* Search */}
+          <div className="relative mt-5">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-[#6D5BD0]" />
 
-              <Link
-                href="/services/my-services"
-                className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-5 text-sm font-medium text-white transition hover:bg-white/[0.09]"
-              >
-                My services
-              </Link>
-            </div>
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search services, skills or students..."
+              className="h-12 w-full rounded-[14px] border border-transparent bg-white pl-11 pr-4 text-sm text-[#252733] outline-none placeholder:text-[#9EA2AF] focus:border-[#DDD7FF]"
+            />
+          </div>
+
+          {/* Hero bottom action */}
+          <div className="mt-3">
+            <Link
+              href="/services/list"
+              className="inline-flex h-10 items-center gap-2 rounded-[12px] border border-white/15 bg-white/[0.08] px-4 text-[12px] font-semibold text-white transition hover:bg-white/[0.13]"
+            >
+              Offer a service
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
-
-        {/* subtle decoration */}
-        <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full border border-white/[0.04]" />
-        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full border border-white/[0.04]" />
       </section>
 
-      {/* Floating search panel */}
-      <section className="relative z-10 mx-auto -mt-10 max-w-7xl px-4 md:-mt-12 md:px-8">
-        <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-[0_12px_35px_rgba(15,23,42,0.10)] md:p-4">
-          <div className="flex flex-col gap-3">
-            {/* Search */}
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400" />
+      {/* FILTERS */}
+      <section className="relative z-10 px-5 pt-5 md:px-8 md:pt-7">
+        <div className="mx-auto max-w-6xl">
+          <div className="-mx-1 overflow-x-auto px-1 pb-1">
+            <div className="flex w-max gap-2">
+              {categories.map((category) => {
+                const selected = activeCategory === category.value;
 
-              <input
-                type="text"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search services, skills or students..."
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8f9fb] pl-11 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-300 focus:bg-white"
-              />
-            </div>
-
-            {/* Category chips */}
-            <div className="-mx-1 overflow-x-auto px-1">
-              <div className="flex w-max gap-2">
-                {categories.map((category) => {
-                  const selected = activeCategory === category.value;
-
-                  return (
-                    <button
-                      key={category.value}
-                      type="button"
-                      onClick={() => setActiveCategory(category.value)}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                        selected
-                          ? "bg-[#101827] text-white"
-                          : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      {category.label}
-                    </button>
-                  );
-                })}
-              </div>
+                return (
+                  <button
+                    key={category.value}
+                    type="button"
+                    onClick={() => setActiveCategory(category.value)}
+                    className={`rounded-full px-4 py-2.5 text-[13px] font-medium transition ${
+                      selected
+                        ? "bg-[#202660] text-white shadow-sm"
+                        : "border border-[#DFDDD6] bg-[#FAF9F6] text-[#666B78] hover:bg-white"
+                    }`}
+                  >
+                    {category.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Services */}
-      <section className="mx-auto max-w-7xl px-5 pb-24 pt-8 md:px-8 md:pb-12 md:pt-10">
+      {/* SERVICES */}
+      <section className="mx-auto max-w-6xl px-5 pb-28 pt-7 md:px-8 md:pb-14 md:pt-9">
+        {/* Heading */}
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-gray-400">
-              Campus marketplace
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8E95A5]">
+              Campus services
             </p>
 
-            <h2 className="mt-1.5 text-2xl font-semibold tracking-tight text-gray-900">
+            <h2 className="mt-1 text-[25px] font-semibold tracking-[-0.025em] text-[#171821]">
               Services
             </h2>
           </div>
 
-          <div className="shrink-0 text-xs text-gray-500 md:text-sm">
+          <div className="pb-1 text-[11px] text-[#858A96] md:text-sm">
             {loading
               ? "Loading..."
               : `${filteredServices.length} ${
-                  filteredServices.length === 1 ? "result" : "results"
+                  filteredServices.length === 1
+                    ? "result"
+                    : "results"
                 }`}
           </div>
         </div>
@@ -322,114 +336,121 @@ export default function ServicesPage() {
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
+                className="overflow-hidden rounded-[20px] border border-[#E2E0D9] bg-white"
               >
-                <div className="aspect-[4/3] animate-pulse bg-gray-100" />
+                <div className="aspect-[1.25] animate-pulse bg-[#E9E9E5]" />
 
                 <div className="space-y-3 p-4">
-                  <div className="h-5 w-3/4 animate-pulse rounded bg-gray-100" />
-                  <div className="h-4 w-full animate-pulse rounded bg-gray-100" />
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-gray-100" />
-                  <div className="mt-4 h-9 w-full animate-pulse rounded-lg bg-gray-100" />
+                  <div className="h-5 w-3/4 animate-pulse rounded bg-[#EFF0F1]" />
+                  <div className="h-4 w-full animate-pulse rounded bg-[#EFF0F1]" />
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-[#EFF0F1]" />
                 </div>
               </div>
             ))}
           </div>
         ) : filteredServices.length === 0 ? (
-          /* Empty */
-          <div className="mt-5 rounded-2xl border border-gray-200 bg-white px-6 py-14 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100">
-              <Search className="h-6 w-6 text-gray-400" />
+          <div className="mt-5 rounded-[20px] border border-[#E1DFD8] bg-white px-6 py-14 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0EEFB]">
+              <Search className="h-6 w-6 text-[#6A58D8]" />
             </div>
 
-            <h3 className="mt-5 text-lg font-semibold text-gray-900">
-              No services yet
+            <h3 className="mt-5 text-lg font-semibold text-[#171821]">
+              No services found
             </h3>
 
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-500">
-              There are no services matching your search right now. Be one of
-              the first students to offer your skills.
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#727887]">
+              Try another search or category, or offer your own
+              service to students around campus.
             </p>
 
             <Link
               href="/services/list"
-              className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#101827] px-5 text-sm font-semibold text-white transition hover:bg-[#182235]"
+              className="mt-6 inline-flex h-10 items-center gap-2 rounded-[12px] bg-[#202660] px-5 text-sm font-semibold text-white transition hover:bg-[#292F76]"
             >
               Offer a service
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         ) : (
-          /* Cards */
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredServices.map((service) => {
               const provider = providers[service.provider_id];
-              const meta = categoryMeta[service.category] ?? categoryMeta.other;
+
+              const meta =
+                categoryMeta[service.category] ?? categoryMeta.other;
+
               const CategoryIcon = meta.icon;
-              const providerName = provider?.full_name || "PPSU Student";
+
+              const providerName =
+                provider?.full_name || "PPSU Student";
 
               return (
                 <Link
                   key={service.id}
                   href={`/services/${service.id}`}
-                  className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                  className="group overflow-hidden rounded-[20px] border border-[#E1DFD8] bg-white transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(23,32,68,0.10)]"
                 >
                   {/* Image */}
-                  <div className="relative aspect-[4/3] overflow-hidden bg-[#eef0f3]">
+                  <div className="relative aspect-[1.25] overflow-hidden bg-[#E8E9E6]">
                     {service.image_url ? (
                       <img
                         src={service.image_url}
                         alt={service.title}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.035]"
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#f0f2f5] to-[#e4e7ec]">
-                        <ImageIcon className="h-9 w-9 text-gray-300" />
+                      <div className="flex h-full w-full items-center justify-center bg-[#E7E8E4]">
+                        <ImageIcon className="h-8 w-8 text-[#BBBFB9]" />
                       </div>
                     )}
 
-                    {/* category */}
-                    <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white/70 bg-white/95 px-2.5 py-1.5 text-[11px] font-medium text-gray-700 shadow-sm">
-                      <CategoryIcon className="h-3.5 w-3.5" />
+                    {/* Category */}
+                    <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-[10px] font-medium text-[#454A55] shadow-sm">
+                      <CategoryIcon className="h-3 w-3" />
                       {meta.label}
                     </div>
 
-                    {/* price */}
-                    <div className="absolute right-3 top-3 rounded-full border border-white/70 bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-sm">
+                    {/* Price */}
+                    <div className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-1.5 text-[11px] font-semibold text-[#1F2330] shadow-sm">
                       {formatPricing(service)}
                     </div>
                   </div>
 
                   {/* Content */}
                   <div className="p-4">
-                    <h3 className="line-clamp-1 text-[15px] font-semibold text-gray-900">
+                    <h3 className="line-clamp-1 text-[15px] font-semibold text-[#171821]">
                       {service.title}
                     </h3>
 
-                    <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-gray-500">
+                    <p className="mt-1.5 line-clamp-2 min-h-[38px] text-[11px] leading-[18px] text-[#747A87]">
                       {service.description}
                     </p>
 
-                    <div className="mt-4 flex items-center gap-2.5 border-t border-gray-100 pt-3.5">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#101827] text-[10px] font-semibold text-white">
+                    {/* Provider */}
+                    <div className="mt-3.5 flex items-center gap-2.5 border-t border-[#EFEEE9] pt-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#202660] text-[10px] font-semibold text-white">
                         {getInitials(providerName)}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-medium text-gray-900">
+                        <p className="truncate text-[11px] font-medium text-[#2A2D35]">
                           {providerName}
                         </p>
 
-                        <p className="truncate text-[11px] text-gray-400">
-                          {service.location || "Campus / Online"}
-                        </p>
+                        <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#9A9FAA]">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span className="truncate">
+                            {service.location || "Campus / Online"}
+                          </span>
+                        </div>
                       </div>
 
-                      <ArrowRight className="h-4 w-4 shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-gray-700" />
+                      <ArrowRight className="h-4 w-4 shrink-0 text-[#C3C6CD] transition group-hover:translate-x-0.5 group-hover:text-[#555A67]" />
                     </div>
 
-                    <div className="mt-3 flex items-center gap-1.5 text-[11px] text-gray-400">
-                      <Star className="h-3.5 w-3.5" />
+                    {/* Footer */}
+                    <div className="mt-3 flex items-center gap-1.5 text-[10px] text-[#9DA1AA]">
+                      <Star className="h-3 w-3" />
                       Student service
                     </div>
                   </div>

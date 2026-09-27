@@ -1,13 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Heart,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Heart, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 type Listing = {
@@ -70,9 +66,17 @@ function getPostedAgo(dateString: string) {
   const created = new Date(dateString).getTime();
   const now = Date.now();
 
-  const minutes = Math.floor((now - created) / (1000 * 60));
-  const hours = Math.floor((now - created) / (1000 * 60 * 60));
-  const days = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+  const minutes = Math.floor(
+    (now - created) / (1000 * 60)
+  );
+
+  const hours = Math.floor(
+    (now - created) / (1000 * 60 * 60)
+  );
+
+  const days = Math.floor(
+    (now - created) / (1000 * 60 * 60 * 24)
+  );
 
   if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes}m ago`;
@@ -93,8 +97,10 @@ export default function MarketplacePage() {
   const [query, setQuery] = useState("");
 
   const [listings, setListings] = useState<Listing[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
-  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [profiles, setProfiles] =
+    useState<Record<string, Profile>>({});
+  const [favoriteIds, setFavoriteIds] =
+    useState<Set<string>>(new Set());
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -106,7 +112,10 @@ export default function MarketplacePage() {
       setLoading(true);
       setError("");
 
-      const { data: listingData, error: listingError } = await supabase
+      const {
+        data: listingData,
+        error: listingError,
+      } = await supabase
         .from("marketplace_listings")
         .select(
           "id, title, description, price, category, condition, image_url, location, seller_id, created_at"
@@ -129,7 +138,9 @@ export default function MarketplacePage() {
       setListings(listingRows);
 
       const sellerIds = Array.from(
-        new Set(listingRows.map((listing) => listing.seller_id))
+        new Set(
+          listingRows.map((listing) => listing.seller_id)
+        )
       );
 
       if (sellerIds.length > 0) {
@@ -147,6 +158,8 @@ export default function MarketplacePage() {
 
           setProfiles(profileMap);
         }
+      } else {
+        setProfiles({});
       }
 
       const {
@@ -165,7 +178,11 @@ export default function MarketplacePage() {
 
         if (mounted && favoriteData) {
           setFavoriteIds(
-            new Set(favoriteData.map((favorite) => favorite.listing_id))
+            new Set(
+              favoriteData.map(
+                (favorite) => favorite.listing_id
+              )
+            )
           );
         }
       } else if (mounted) {
@@ -185,7 +202,7 @@ export default function MarketplacePage() {
   }, [supabase]);
 
   async function toggleFavorite(
-    event: React.MouseEvent<HTMLButtonElement>,
+    event: MouseEvent<HTMLButtonElement>,
     listingId: string
   ) {
     event.preventDefault();
@@ -198,7 +215,7 @@ export default function MarketplacePage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push(`/login?redirect=/marketplace`);
+      router.push("/login?redirect=/marketplace");
       return;
     }
 
@@ -247,7 +264,8 @@ export default function MarketplacePage() {
 
     return listings.filter((listing) => {
       const categoryMatch =
-        category === "all" || listing.category === category;
+        category === "all" ||
+        listing.category === category;
 
       const searchMatch =
         !search ||
@@ -262,34 +280,39 @@ export default function MarketplacePage() {
   return (
     <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
       <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] pb-28">
-        {/* HERO PANEL */}
-        <section className="relative overflow-hidden rounded-b-[32px] bg-[#20265F] px-5 pb-8 pt-9 text-white sm:px-8 sm:pb-10 sm:pt-11">
+        {/* HERO */}
+        <section className="relative overflow-hidden rounded-b-[32px] bg-[linear-gradient(115deg,#202660_0%,#2F337B_48%,#4D43B3_100%)] px-5 pb-7 pt-7 text-white sm:px-8 sm:pb-9 sm:pt-9">
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-[#5E4BD1]/30 blur-3xl"
+            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full border border-white/[0.06]"
           />
 
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-24 left-16 h-52 w-52 rounded-full bg-[#8C7BFF]/20 blur-3xl"
+            className="pointer-events-none absolute right-8 top-20 h-32 w-32 rounded-full border border-white/[0.06]"
           />
 
-          <p className="relative text-[10px] font-bold uppercase tracking-[0.22em] text-[#BEB8FF]">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -bottom-20 left-12 h-48 w-48 rounded-full bg-[#7568D8]/20 blur-3xl"
+          />
+
+          <p className="relative text-[10px] font-bold uppercase tracking-[0.20em] text-[#C5BFFF]">
             Campus marketplace
           </p>
 
-          <h1 className="relative mt-2 text-[30px] font-bold tracking-[-0.055em] sm:text-[38px]">
+          <h1 className="relative mt-1.5 text-[29px] font-bold tracking-[-0.045em] sm:text-[36px]">
             Marketplace
           </h1>
 
-          <p className="relative mt-1.5 text-[13px] font-medium text-[#C8C6E0]">
+          <p className="relative mt-1 text-[12px] font-medium text-[#D0CDED]">
             Buy and sell useful things within your campus.
           </p>
 
           {/* SEARCH */}
-          <div className="relative mt-6 flex h-12 items-center gap-3 rounded-[16px] bg-white px-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+          <div className="relative mt-5 flex h-12 items-center gap-3 rounded-[14px] bg-white px-4 shadow-[0_8px_25px_rgba(0,0,0,0.18)]">
             <Search
-              size={18}
+              size={17}
               className="shrink-0 text-[#5E4BD1]"
               strokeWidth={1.8}
             />
@@ -298,34 +321,30 @@ export default function MarketplacePage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search listings, books, tech..."
-              className="w-full bg-transparent text-[13px] font-medium text-[#172044] outline-none placeholder:text-[#9B9CA6]"
+              className="w-full min-w-0 bg-transparent text-[12px] font-medium text-[#172044] outline-none placeholder:text-[#9B9CA6]"
             />
-
-            <button
-              type="button"
-              aria-label="Filters"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#F0ECFA] text-[#5E50A1]"
-            >
-              <SlidersHorizontal size={15} strokeWidth={1.8} />
-            </button>
           </div>
 
-          {/* CATEGORY PILLS */}
-          <nav className="relative mt-4 flex gap-2 overflow-x-auto no-scrollbar">
-            {categories.map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setCategory(id)}
-                className={`flex h-9 shrink-0 items-center rounded-full px-4 text-[12px] font-semibold transition-colors ${
-                  category === id
-                    ? "bg-white text-[#20265F]"
-                    : "bg-white/10 text-[#DCD6FF] hover:bg-white/15"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          {/* CATEGORY FILTERS */}
+          <nav className="relative mt-3.5 flex gap-1.5 overflow-x-auto no-scrollbar">
+            {categories.map(([id, label]) => {
+              const selected = category === id;
+
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setCategory(id)}
+                  className={`flex h-8 shrink-0 items-center whitespace-nowrap rounded-full px-3.5 text-[11px] font-medium leading-none transition-colors ${
+                    selected
+                      ? "bg-white text-[#20265F]"
+                      : "bg-white/10 text-[#DDD8F7] hover:bg-white/15"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </nav>
         </section>
 
@@ -337,31 +356,38 @@ export default function MarketplacePage() {
                 All listings
               </h2>
 
-              <p className="mt-1 text-[11px] font-medium text-[#858796]">
+              <p className="mt-1 text-[10px] font-medium text-[#858796]">
                 {filteredListings.length}{" "}
-                {filteredListings.length === 1 ? "item" : "items"} available
-                on campus
+                {filteredListings.length === 1
+                  ? "item"
+                  : "items"}{" "}
+                available on campus
               </p>
             </div>
 
+            {/* ACTIONS */}
             <div className="flex shrink-0 items-center gap-2">
               <Link
                 href="/marketplace/saved"
-                className="rounded-full border border-[#DCD8D0] bg-white px-3.5 py-2.5 text-[10px] font-bold text-[#4F5364] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
+                className="inline-flex h-9 items-center whitespace-nowrap rounded-full border border-[#DCD8D0] bg-white px-3.5 text-[10px] font-medium text-[#555967] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
               >
                 Saved
               </Link>
 
               <Link
                 href="/marketplace/my-listings"
-                className="rounded-full border border-[#DCD8D0] bg-white px-3.5 py-2.5 text-[10px] font-bold text-[#4F5364] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
+                className="inline-flex h-9 items-center whitespace-nowrap rounded-full border border-[#DCD8D0] bg-white px-3.5 text-[10px] font-medium text-[#555967] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
               >
                 My listings
               </Link>
 
               <Link
                 href="/marketplace/sell"
-                className="rounded-full bg-[#20265F] px-4 py-2.5 text-[10px] font-bold text-white shadow-[0_5px_14px_rgba(32,38,95,0.14)] transition hover:bg-[#191E53]"
+                className="inline-flex h-9 min-w-[92px] items-center justify-center whitespace-nowrap rounded-full px-4 text-[11px] font-semibold shadow-[0_5px_14px_rgba(32,38,95,0.14)] transition hover:bg-[#191E53]"
+                style={{
+                  backgroundColor: "#20265F",
+                  color: "#FFFFFF",
+                }}
               >
                 + Sell item
               </Link>
@@ -369,19 +395,21 @@ export default function MarketplacePage() {
           </div>
 
           {error && (
-            <div className="mb-5 rounded-[16px] border border-[#F0CACA] bg-[#FFF4F4] px-4 py-3 text-[11px] leading-5 text-[#A33A3A]">
+            <div className="mb-5 rounded-[14px] border border-[#F0CACA] bg-[#FFF4F4] px-4 py-3 text-[11px] leading-5 text-[#A33A3A]">
               {error}
             </div>
           )}
 
+          {/* LOADING */}
           {loading ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {Array.from({ length: 10 }).map((_, index) => (
                 <div
                   key={index}
-                  className="overflow-hidden rounded-[22px] border border-[#E3DFD7] bg-[#FFFDF9]"
+                  className="overflow-hidden rounded-[20px] border border-[#E3DFD7] bg-[#FFFDF9]"
                 >
                   <div className="aspect-[0.94] animate-pulse bg-[#E9E5DC]" />
+
                   <div className="space-y-2 p-3.5 pb-4">
                     <div className="h-4 animate-pulse rounded bg-[#E9E5DC]" />
                     <div className="h-3 w-2/3 animate-pulse rounded bg-[#EFECE5]" />
@@ -391,7 +419,7 @@ export default function MarketplacePage() {
               ))}
             </div>
           ) : filteredListings.length === 0 ? (
-            <div className="rounded-[22px] border border-dashed border-[#D3CFC6] bg-white/60 py-20 text-center">
+            <div className="rounded-[20px] border border-dashed border-[#D3CFC6] bg-white/60 py-20 text-center">
               <p className="text-sm font-semibold text-[#172044]">
                 No listings found
               </p>
@@ -402,19 +430,24 @@ export default function MarketplacePage() {
 
               <Link
                 href="/marketplace/sell"
-                className="mt-5 inline-flex rounded-full bg-[#20265F] px-4 py-2.5 text-[11px] font-bold text-white"
+                className="mt-5 inline-flex rounded-full px-4 py-2.5 text-[11px] font-semibold"
+                style={{
+                  backgroundColor: "#20265F",
+                  color: "#FFFFFF",
+                }}
               >
                 Sell the first item
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {filteredListings.map((listing, index) => {
                 const sellerName =
                   profiles[listing.seller_id]?.full_name ||
                   "Campus seller";
 
-                const isFavorite = favoriteIds.has(listing.id);
+                const isFavorite =
+                  favoriteIds.has(listing.id);
 
                 return (
                   <Link
@@ -422,35 +455,44 @@ export default function MarketplacePage() {
                     href={`/marketplace/${listing.id}`}
                     className="group min-w-0"
                   >
-                    <article className="overflow-hidden rounded-[22px] border border-[#E3DFD7] bg-[#FFFDF9] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(23,32,68,0.07)]">
+                    <article className="overflow-hidden rounded-[20px] border border-[#E3DFD7] bg-[#FFFDF9] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(23,32,68,0.07)]">
                       {/* IMAGE */}
                       <div
                         className="relative aspect-[0.94] overflow-hidden"
                         style={{
                           backgroundColor:
-                            cardTints[index % cardTints.length],
+                            cardTints[
+                              index % cardTints.length
+                            ],
                         }}
                       >
                         {listing.image_url ? (
                           <img
                             src={listing.image_url}
                             alt={listing.title}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                           />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-[11px] font-semibold text-[#777A8B]">
+                          <div className="flex h-full items-center justify-center text-[10px] font-medium text-[#777A8B]">
                             No image
                           </div>
                         )}
 
-                        <span className="absolute left-3 top-3 rounded-full bg-[#FFFDF9]/95 px-2.5 py-1.5 text-[9px] font-bold text-[#30354B] shadow-sm">
-                          {getCategoryLabel(listing.category)}
+                        {/* CATEGORY */}
+                        <span className="absolute left-3 top-3 rounded-full bg-[#FFFDF9]/95 px-2.5 py-1.5 text-[9px] font-semibold text-[#30354B] shadow-sm">
+                          {getCategoryLabel(
+                            listing.category
+                          )}
                         </span>
 
+                        {/* FAVORITE */}
                         <button
                           type="button"
                           onClick={(event) =>
-                            toggleFavorite(event, listing.id)
+                            toggleFavorite(
+                              event,
+                              listing.id
+                            )
                           }
                           aria-label={
                             isFavorite
@@ -466,12 +508,16 @@ export default function MarketplacePage() {
                           <Heart
                             size={15}
                             strokeWidth={1.8}
-                            fill={isFavorite ? "currentColor" : "none"}
+                            fill={
+                              isFavorite
+                                ? "currentColor"
+                                : "none"
+                            }
                           />
                         </button>
                       </div>
 
-                      {/* CARD DETAILS */}
+                      {/* DETAILS */}
                       <div className="px-3.5 pb-4 pt-3">
                         <div className="flex items-start justify-between gap-2">
                           <h3 className="min-w-0 line-clamp-2 text-[12px] font-bold leading-[17px] tracking-[-0.01em] text-[#202540]">
@@ -479,20 +525,28 @@ export default function MarketplacePage() {
                           </h3>
 
                           <span className="shrink-0 text-[12px] font-extrabold text-[#5E4BD1]">
-                            ₹{Number(listing.price).toLocaleString("en-IN")}
+                            ₹
+                            {Number(
+                              listing.price
+                            ).toLocaleString("en-IN")}
                           </span>
                         </div>
 
-                        <span className="mt-2 inline-flex rounded-full bg-[#EEE7FA] px-2 py-1 text-[9px] font-bold text-[#6650A5]">
-                          {getConditionLabel(listing.condition)}
+                        <span className="mt-2 inline-flex rounded-full bg-[#EEE7FA] px-2 py-1 text-[9px] font-semibold text-[#6650A5]">
+                          {getConditionLabel(
+                            listing.condition
+                          )}
                         </span>
 
                         <p className="mt-2 truncate text-[10px] font-medium text-[#7E8190]">
-                          {sellerName} · {listing.location}
+                          {sellerName} ·{" "}
+                          {listing.location}
                         </p>
 
                         <p className="mt-1 text-[9px] text-[#A0A0AA]">
-                          {getPostedAgo(listing.created_at)}
+                          {getPostedAgo(
+                            listing.created_at
+                          )}
                         </p>
                       </div>
                     </article>

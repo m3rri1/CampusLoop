@@ -57,20 +57,18 @@ export default function ListServicePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("tutoring");
-
   const [pricingType, setPricingType] =
     useState<PricingType>("fixed");
-
   const [price, setPrice] = useState("");
   const [location, setLocation] = useState("");
   const [availability, setAvailability] = useState("");
   const [tags, setTags] = useState("");
 
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(
-    null
-  );
+  const [imagePreview, setImagePreview] =
+    useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] =
+    useState<string | null>(null);
 
   const [serviceStatus, setServiceStatus] = useState<
     "active" | "unavailable" | "removed"
@@ -124,7 +122,10 @@ export default function ListServicePage() {
       .single();
 
     if (fetchError || !data) {
-      console.error("Error loading service for edit:", fetchError);
+      console.error(
+        "Error loading service for edit:",
+        fetchError
+      );
       setError("This service could not be loaded for editing.");
       setLoadingEdit(false);
       return;
@@ -136,11 +137,13 @@ export default function ListServicePage() {
     setDescription(service.description);
     setCategory(service.category);
     setPricingType(service.pricing_type);
+
     setPrice(
       service.pricing_type === "fixed"
         ? String(service.price ?? "")
         : ""
     );
+
     setLocation(service.location ?? "");
     setAvailability(service.availability ?? "");
     setTags((service.tags ?? []).join(", "));
@@ -151,7 +154,9 @@ export default function ListServicePage() {
     setLoadingEdit(false);
   }
 
-  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+  function handleImageChange(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -169,7 +174,10 @@ export default function ListServicePage() {
     setError("");
     setImageFile(file);
 
-    if (imagePreview && imagePreview !== existingImageUrl) {
+    if (
+      imagePreview &&
+      imagePreview !== existingImageUrl
+    ) {
       URL.revokeObjectURL(imagePreview);
     }
 
@@ -178,7 +186,10 @@ export default function ListServicePage() {
   }
 
   function removeImage() {
-    if (imagePreview && imagePreview !== existingImageUrl) {
+    if (
+      imagePreview &&
+      imagePreview !== existingImageUrl
+    ) {
       URL.revokeObjectURL(imagePreview);
     }
 
@@ -219,7 +230,9 @@ export default function ListServicePage() {
     return null;
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     setError("");
@@ -242,10 +255,10 @@ export default function ListServicePage() {
     try {
       let imageUrl: string | null = existingImageUrl;
 
-      // Upload a new image only when the user selected one.
       if (imageFile) {
         const extension =
-          imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
+          imageFile.name.split(".").pop()?.toLowerCase() ||
+          "jpg";
 
         const filePath = `${userId}/${crypto.randomUUID()}.${extension}`;
 
@@ -275,10 +288,11 @@ export default function ListServicePage() {
         .slice(0, 8);
 
       const finalPrice =
-        pricingType === "fixed" ? Number(price || 0) : 0;
+        pricingType === "fixed"
+          ? Number(price || 0)
+          : 0;
 
       if (editId) {
-        // UPDATE existing service
         const { error: updateError } = await supabase
           .from("student_services")
           .update({
@@ -306,7 +320,6 @@ export default function ListServicePage() {
           router.push(`/services/${editId}`);
         }, 700);
       } else {
-        // INSERT new service
         const { data, error: insertError } = await supabase
           .from("student_services")
           .insert({
@@ -355,9 +368,9 @@ export default function ListServicePage() {
 
   if (checkingUser || loadingEdit) {
     return (
-      <main className="min-h-screen bg-[#f6f7f9]">
+      <main className="min-h-screen bg-[#F5F3ED]">
         <div className="flex min-h-[70vh] items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+          <Loader2 className="h-6 w-6 animate-spin text-[#5D48D2]" />
         </div>
       </main>
     );
@@ -366,78 +379,98 @@ export default function ListServicePage() {
   const isEditing = Boolean(editId);
 
   return (
-    <main className="min-h-screen bg-[#f6f7f9] pb-24">
-      {/* Header */}
-      <section className="bg-[#101827] text-white">
-        <div className="mx-auto max-w-4xl px-5 pb-10 pt-7 md:px-8 md:pb-12 md:pt-10">
+    <main className="min-h-screen bg-[#F5F3ED] pb-28 text-[#17151C]">
+      {/* HEADER */}
+      <section className="relative overflow-hidden rounded-b-[34px] bg-[linear-gradient(115deg,#202660_0%,#2F337B_48%,#4D43B3_100%)] text-white">
+        <div className="pointer-events-none absolute -right-16 -top-12 h-48 w-48 rounded-full border border-white/[0.07]" />
+        <div className="pointer-events-none absolute right-10 top-20 h-32 w-32 rounded-full border border-white/[0.06]" />
+
+        <div className="relative mx-auto max-w-4xl px-5 pb-8 pt-6 md:px-8 md:pb-10 md:pt-8">
           <Link
-            href={isEditing ? "/services/my-services" : "/services"}
-            className="inline-flex items-center gap-2 text-sm text-white/60 transition hover:text-white"
+            href={
+              isEditing
+                ? "/services/my-services"
+                : "/services"
+            }
+            className="inline-flex items-center gap-2 text-[12px] font-medium text-white/65 transition hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            {isEditing ? "Back to my services" : "Back to services"}
+            {isEditing
+              ? "Back to my services"
+              : "Back to services"}
           </Link>
 
-          <div className="mt-7">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-2 text-xs font-medium text-white/75">
+          <div className="mt-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-[10px] font-semibold text-white/85">
               {isEditing ? (
                 <Save className="h-3.5 w-3.5" />
               ) : (
                 <Plus className="h-3.5 w-3.5" />
               )}
 
-              {isEditing ? "Edit listing" : "Create listing"}
+              {isEditing
+                ? "Edit service"
+                : "Offer a service"}
             </div>
 
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
-              {isEditing ? "Edit your service" : "Offer a service"}
+            <h1 className="mt-4 max-w-xl text-[31px] font-semibold leading-[1.08] tracking-[-0.035em] md:text-4xl">
+              {isEditing
+                ? "Edit your service."
+                : "Offer your skills to campus."}
             </h1>
 
-            <p className="mt-2 max-w-xl text-sm leading-6 text-white/60">
+            <p className="mt-3 max-w-xl text-[12px] leading-5 text-white/65 md:text-sm md:leading-6">
               {isEditing
-                ? "Update your service details and keep your listing current."
-                : "Turn your skills into something useful for people around your campus."}
+                ? "Keep your listing accurate and up to date."
+                : "Share something you know, make or do with other students."}
             </p>
           </div>
         </div>
       </section>
 
-      {/* Form */}
-      <section className="mx-auto max-w-4xl px-4 pt-6 md:px-8 md:pt-8">
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Basic information */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
-            <div className="mb-6">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-gray-400">
+      {/* FORM */}
+      <section className="mx-auto max-w-4xl px-4 pt-5 md:px-8 md:pt-8">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+        >
+          {/* BASIC INFO */}
+          <div className="rounded-[20px] border border-[#E1DED6] bg-white p-5 md:p-6">
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9298A6]">
                 Basic information
               </p>
 
-              <h2 className="mt-1 text-lg font-semibold text-gray-900">
-                Tell students what you offer
+              <h2 className="mt-1.5 text-[20px] font-semibold tracking-[-0.02em] text-[#171821]">
+                What do you offer?
               </h2>
             </div>
 
             <div className="space-y-5">
+              {/* Title */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-800">
+                <label className="mb-2 block text-[12px] font-semibold text-[#343741]">
                   Service title
                 </label>
 
                 <input
                   value={title}
-                  onChange={(event) => setTitle(event.target.value)}
+                  onChange={(event) =>
+                    setTitle(event.target.value)
+                  }
                   maxLength={100}
                   placeholder="e.g. I can design posters and Instagram creatives"
-                  className="h-12 w-full rounded-xl border border-gray-200 bg-[#f9fafb] px-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:bg-white"
+                  className="h-12 w-full rounded-[13px] border border-[#E2E1DC] bg-[#FAFAF8] px-4 text-[13px] text-[#20222B] outline-none transition placeholder:text-[#A1A5B0] focus:border-[#BDB7EF] focus:bg-white"
                 />
 
-                <div className="mt-1.5 text-right text-[11px] text-gray-400">
+                <div className="mt-1.5 text-right text-[10px] text-[#A0A4AD]">
                   {title.length}/100
                 </div>
               </div>
 
+              {/* Description */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-800">
+                <label className="mb-2 block text-[12px] font-semibold text-[#343741]">
                   Description
                 </label>
 
@@ -449,47 +482,59 @@ export default function ListServicePage() {
                   maxLength={1000}
                   rows={5}
                   placeholder="Explain what you provide, what students receive, and anything they should know before contacting you."
-                  className="w-full resize-none rounded-xl border border-gray-200 bg-[#f9fafb] px-4 py-3 text-sm leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:bg-white"
+                  className="w-full resize-none rounded-[13px] border border-[#E2E1DC] bg-[#FAFAF8] px-4 py-3 text-[13px] leading-5 text-[#20222B] outline-none transition placeholder:text-[#A1A5B0] focus:border-[#BDB7EF] focus:bg-white"
                 />
 
-                <div className="mt-1.5 text-right text-[11px] text-gray-400">
+                <div className="mt-1.5 text-right text-[10px] text-[#A0A4AD]">
                   {description.length}/1000
                 </div>
               </div>
 
+              {/* Category */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-800">
+                <label className="mb-2.5 block text-[12px] font-semibold text-[#343741]">
                   Category
                 </label>
 
-                <select
-                  value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  className="h-12 w-full appearance-none rounded-xl border border-gray-200 bg-[#f9fafb] px-4 text-sm text-gray-900 outline-none focus:border-gray-400 focus:bg-white"
-                >
-                  {categories.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((item) => {
+                    const selected = category === item.value;
+
+                    return (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() =>
+                          setCategory(item.value)
+                        }
+                        className={`rounded-full px-4 py-2.5 text-[12px] font-medium transition ${
+                          selected
+                            ? "bg-[#202660] text-white"
+                            : "border border-[#E1DFD8] bg-[#FAF9F6] text-[#656A77] hover:bg-white"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Pricing */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
-            <div className="mb-6">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-gray-400">
+          {/* PRICING */}
+          <div className="rounded-[20px] border border-[#E1DED6] bg-white p-5 md:p-6">
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9298A6]">
                 Pricing
               </p>
 
-              <h2 className="mt-1 text-lg font-semibold text-gray-900">
+              <h2 className="mt-1.5 text-[20px] font-semibold tracking-[-0.02em] text-[#171821]">
                 How should students pay?
               </h2>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-2.5 sm:grid-cols-3">
               {[
                 {
                   value: "free" as PricingType,
@@ -507,21 +552,24 @@ export default function ListServicePage() {
                   description: "Discuss in chat",
                 },
               ].map((option) => {
-                const selected = pricingType === option.value;
+                const selected =
+                  pricingType === option.value;
 
                 return (
                   <button
                     key={option.value}
                     type="button"
-                    onClick={() => setPricingType(option.value)}
-                    className={`rounded-xl border p-4 text-left transition ${
+                    onClick={() =>
+                      setPricingType(option.value)
+                    }
+                    className={`rounded-[14px] border p-4 text-left transition ${
                       selected
-                        ? "border-[#101827] bg-[#101827] text-white"
-                        : "border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
+                        ? "border-[#202660] bg-[#202660] text-white"
+                        : "border-[#E1DFD8] bg-[#FAF9F6] text-[#242731] hover:bg-white"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold">
+                      <span className="text-[13px] font-semibold">
                         {option.title}
                       </span>
 
@@ -531,10 +579,10 @@ export default function ListServicePage() {
                     </div>
 
                     <p
-                      className={`mt-1 text-xs ${
+                      className={`mt-1 text-[11px] ${
                         selected
                           ? "text-white/60"
-                          : "text-gray-500"
+                          : "text-[#8A8F9A]"
                       }`}
                     >
                       {option.description}
@@ -546,12 +594,12 @@ export default function ListServicePage() {
 
             {pricingType === "fixed" && (
               <div className="mt-4">
-                <label className="mb-2 block text-sm font-medium text-gray-800">
+                <label className="mb-2 block text-[12px] font-semibold text-[#343741]">
                   Price
                 </label>
 
                 <div className="relative">
-                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[13px] text-[#777C89]">
                     ₹
                   </span>
 
@@ -561,31 +609,34 @@ export default function ListServicePage() {
                     pattern="[0-9]*"
                     value={price}
                     onChange={(event) =>
-                      handlePriceChange(event.target.value)
+                      handlePriceChange(
+                        event.target.value
+                      )
                     }
                     placeholder="500"
-                    className="h-12 w-full rounded-xl border border-gray-200 bg-[#f9fafb] pl-8 pr-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:bg-white"
+                    className="h-12 w-full rounded-[13px] border border-[#E2E1DC] bg-[#FAFAF8] pl-8 pr-4 text-[13px] text-[#20222B] outline-none transition placeholder:text-[#A1A5B0] focus:border-[#BDB7EF] focus:bg-white"
                   />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Details */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
-            <div className="mb-6">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-gray-400">
+          {/* DETAILS */}
+          <div className="rounded-[20px] border border-[#E1DED6] bg-white p-5 md:p-6">
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9298A6]">
                 Service details
               </p>
 
-              <h2 className="mt-1 text-lg font-semibold text-gray-900">
-                Help students understand how it works
+              <h2 className="mt-1.5 text-[20px] font-semibold tracking-[-0.02em] text-[#171821]">
+                Help students know what to expect.
               </h2>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
+              {/* Location */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-800">
+                <label className="mb-2 block text-[12px] font-semibold text-[#343741]">
                   Location
                 </label>
 
@@ -596,66 +647,72 @@ export default function ListServicePage() {
                   }
                   maxLength={100}
                   placeholder="e.g. PPSU Campus / Online"
-                  className="h-12 w-full rounded-xl border border-gray-200 bg-[#f9fafb] px-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:bg-white"
+                  className="h-12 w-full rounded-[13px] border border-[#E2E1DC] bg-[#FAFAF8] px-4 text-[13px] text-[#20222B] outline-none transition placeholder:text-[#A1A5B0] focus:border-[#BDB7EF] focus:bg-white"
                 />
               </div>
 
+              {/* Availability */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-800">
+                <label className="mb-2 block text-[12px] font-semibold text-[#343741]">
                   Availability
                 </label>
 
                 <input
                   value={availability}
                   onChange={(event) =>
-                    setAvailability(event.target.value)
+                    setAvailability(
+                      event.target.value
+                    )
                   }
                   maxLength={100}
                   placeholder="e.g. Weekday evenings"
-                  className="h-12 w-full rounded-xl border border-gray-200 bg-[#f9fafb] px-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:bg-white"
+                  className="h-12 w-full rounded-[13px] border border-[#E2E1DC] bg-[#FAFAF8] px-4 text-[13px] text-[#20222B] outline-none transition placeholder:text-[#A1A5B0] focus:border-[#BDB7EF] focus:bg-white"
                 />
               </div>
             </div>
 
+            {/* Tags */}
             <div className="mt-5">
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-800">
-                <Tag className="h-4 w-4 text-gray-400" />
+              <label className="mb-2 flex items-center gap-2 text-[12px] font-semibold text-[#343741]">
+                <Tag className="h-3.5 w-3.5 text-[#777D89]" />
                 Tags
               </label>
 
               <input
                 value={tags}
-                onChange={(event) => setTags(event.target.value)}
+                onChange={(event) =>
+                  setTags(event.target.value)
+                }
                 placeholder="e.g. figma, instagram, poster, branding"
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f9fafb] px-4 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-gray-400 focus:bg-white"
+                className="h-12 w-full rounded-[13px] border border-[#E2E1DC] bg-[#FAFAF8] px-4 text-[13px] text-[#20222B] outline-none transition placeholder:text-[#A1A5B0] focus:border-[#BDB7EF] focus:bg-white"
               />
 
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-1.5 text-[10px] text-[#9A9FAA]">
                 Separate tags with commas.
               </p>
             </div>
           </div>
 
-          {/* Image */}
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm md:p-6">
-            <div className="mb-6">
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-gray-400">
+          {/* IMAGE */}
+          <div className="rounded-[20px] border border-[#E1DED6] bg-white p-5 md:p-6">
+            <div className="mb-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#9298A6]">
                 Cover image
               </p>
 
-              <h2 className="mt-1 text-lg font-semibold text-gray-900">
+              <h2 className="mt-1.5 text-[20px] font-semibold tracking-[-0.02em] text-[#171821]">
                 {isEditing
-                  ? "Update your cover image"
-                  : "Add a photo to your listing"}
+                  ? "Update your cover image."
+                  : "Add a photo to your listing."}
               </h2>
 
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-[11px] text-[#858A96]">
                 PNG, JPG or WEBP · max 5 MB
               </p>
             </div>
 
             {imagePreview ? (
-              <div className="relative overflow-hidden rounded-2xl border border-gray-200">
+              <div className="relative overflow-hidden rounded-[16px] border border-[#E1DFD8] bg-[#ECEDE9]">
                 <img
                   src={imagePreview}
                   alt="Service preview"
@@ -665,26 +722,27 @@ export default function ListServicePage() {
                 <button
                   type="button"
                   onClick={removeImage}
-                  className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur transition hover:bg-black/80"
+                  className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur transition hover:bg-black/80"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ) : (
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-[#fafbfc] px-6 py-12 text-center transition hover:border-gray-300 hover:bg-gray-50">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100">
-                  <Upload className="h-5 w-5 text-gray-500" />
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-[16px] border border-dashed border-[#D8D7D1] bg-[#FAF9F6] px-6 py-11 text-center transition hover:border-[#BBB6E9] hover:bg-[#F8F7FC]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-[#EFEDFB]">
+                  <Upload className="h-5 w-5 text-[#6856D8]" />
                 </div>
 
-                <p className="mt-4 text-sm font-semibold text-gray-800">
+                <p className="mt-4 text-[13px] font-semibold text-[#343741]">
                   Upload a cover image
                 </p>
 
-                <p className="mt-1 text-xs text-gray-500">
-                  A clear image makes your listing easier to discover.
+                <p className="mt-1 text-[11px] text-[#858A96]">
+                  A clear image makes your listing easier to
+                  discover.
                 </p>
 
-                <span className="mt-4 inline-flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 text-xs font-medium text-gray-700 shadow-sm">
+                <span className="mt-4 inline-flex h-9 items-center gap-2 rounded-[10px] border border-[#E0DED7] bg-white px-4 text-[11px] font-medium text-[#555A66]">
                   <ImageIcon className="h-3.5 w-3.5" />
                   Choose image
                 </span>
@@ -699,33 +757,34 @@ export default function ListServicePage() {
             )}
           </div>
 
-          {/* Errors / success */}
+          {/* ERROR */}
           {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-5 text-red-700">
+            <div className="rounded-[14px] border border-red-200 bg-red-50 px-4 py-3 text-[12px] leading-5 text-red-700">
               {error}
             </div>
           )}
 
+          {/* SUCCESS */}
           {success && (
-            <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <div className="flex items-center gap-2 rounded-[14px] border border-green-200 bg-green-50 px-4 py-3 text-[12px] text-green-700">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               {success}
             </div>
           )}
 
-          {/* Submit */}
-          <div className="sticky bottom-3 z-20 rounded-2xl border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">
+          {/* SUBMIT */}
+          <div className="sticky bottom-3 z-20 rounded-[18px] border border-[#DEDCD6] bg-white/95 p-3 shadow-[0_10px_30px_rgba(23,32,68,0.12)] backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <div className="hidden min-w-0 sm:block">
+                <p className="text-[12px] font-semibold text-[#292C35]">
                   {isEditing
                     ? "Ready to save your changes?"
                     : "Ready to publish?"}
                 </p>
 
-                <p className="text-xs text-gray-500">
+                <p className="mt-0.5 text-[10px] text-[#8B909C]">
                   {isEditing
-                    ? "Your updated information will appear immediately."
+                    ? "Your updated service will appear immediately."
                     : "Your service will be visible to campus students."}
                 </p>
               </div>
@@ -733,12 +792,14 @@ export default function ListServicePage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#101827] px-6 text-sm font-semibold text-white transition hover:bg-[#182235] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] bg-[#202660] px-6 text-[12px] font-semibold text-white transition hover:bg-[#292F76] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
                 {submitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    {isEditing ? "Saving..." : "Publishing..."}
+                    {isEditing
+                      ? "Saving..."
+                      : "Publishing..."}
                   </>
                 ) : isEditing ? (
                   <>
