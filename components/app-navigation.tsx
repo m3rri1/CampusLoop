@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Package, Search, UserRound, MessageCircle, Plus } from "lucide-react";
+import {
+  Home,
+  ShoppingBag,
+  Search,
+  UserRound,
+  MessageCircle,
+  CalendarDays,
+  Plus,
+} from "lucide-react";
 
 export default function AppNavigation() {
   const pathname = usePathname();
@@ -16,12 +24,13 @@ export default function AppNavigation() {
   }
 
   const items = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/marketplace", label: "Marketplace", icon: Package },
-  { href: "/lost-found", label: "Lost & Found", icon: Search },
-  { href: "/chat", label: "Chat", icon: MessageCircle },
-  { href: "/profile", label: "Profile", icon: UserRound },
-];
+    { href: "/", label: "Home", icon: Home },
+    { href: "/marketplace", label: "Marketplace", icon: ShoppingBag },
+    { href: "/lost-found", label: "Lost & Found", icon: Search },
+    { href: "/rent", label: "Rent", icon: CalendarDays },
+    { href: "/chat", label: "Chat", icon: MessageCircle },
+    { href: "/profile", label: "Profile", icon: UserRound },
+  ];
 
   return (
     <>
@@ -47,10 +56,11 @@ export default function AppNavigation() {
       )}
 
       {/* MOBILE BOTTOM NAV */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-3 md:hidden">
-        <div className="mx-auto flex max-w-[430px] items-center justify-around rounded-[22px] border border-[#E7E2D8] bg-white/95 px-1.5 py-1.5 shadow-[0_10px_35px_rgba(23,32,68,0.14)] backdrop-blur-md">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 px-2 pb-3 md:hidden">
+        <div className="mx-auto flex max-w-[500px] items-center justify-around rounded-[22px] border border-[#E7E2D8] bg-white/95 px-1 py-1.5 shadow-[0_10px_35px_rgba(23,32,68,0.14)] backdrop-blur-md">
           {items.map((item) => {
             const Icon = item.icon;
+
             const active =
               item.href === "/"
                 ? pathname === "/"
@@ -60,14 +70,18 @@ export default function AppNavigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[15px] px-2 py-2 transition ${
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[15px] px-1.5 py-2 transition ${
                   active
                     ? "bg-[#23265B] text-white shadow-[0_3px_10px_rgba(35,38,91,0.3)]"
                     : "text-[#8A8C99] hover:text-[#23265B]"
                 }`}
               >
-                <Icon size={16} strokeWidth={active ? 2.3 : 1.7} />
-                <span className="text-[8px] font-semibold leading-none">
+                <Icon
+                  size={15}
+                  strokeWidth={active ? 2.3 : 1.7}
+                />
+
+                <span className="truncate text-[7px] font-semibold leading-none">
                   {item.label}
                 </span>
               </Link>

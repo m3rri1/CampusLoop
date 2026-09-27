@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-type BorrowItem = {
+type RentItem = {
   id: string;
   owner_id: string;
   title: string;
@@ -91,13 +91,13 @@ function getPostedAgo(dateString: string) {
   });
 }
 
-export default function BorrowPage() {
+export default function RentPage() {
   const [supabase] = useState(() => createClient());
 
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
 
-  const [items, setItems] = useState<BorrowItem[]>([]);
+  const [items, setItems] = useState<RentItem[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
 
   const [loading, setLoading] = useState(true);
@@ -106,7 +106,7 @@ export default function BorrowPage() {
   useEffect(() => {
     let mounted = true;
 
-    async function loadBorrowItems() {
+    async function loadRentItems() {
       setLoading(true);
       setError("");
 
@@ -126,7 +126,7 @@ export default function BorrowPage() {
         return;
       }
 
-      const itemRows = (itemData ?? []) as BorrowItem[];
+      const itemRows = (itemData ?? []) as RentItem[];
 
       if (!mounted) return;
 
@@ -158,7 +158,7 @@ export default function BorrowPage() {
       }
     }
 
-    loadBorrowItems();
+    loadRentItems();
 
     return () => {
       mounted = false;
@@ -198,15 +198,15 @@ export default function BorrowPage() {
           />
 
           <p className="relative text-[10px] font-bold uppercase tracking-[0.22em] text-[#BEB8FF]">
-            Campus sharing
+            Campus rentals
           </p>
 
           <h1 className="relative mt-2 text-[30px] font-bold tracking-[-0.055em] sm:text-[38px]">
-            Borrow
+            Rent
           </h1>
 
           <p className="relative mt-1.5 max-w-xl text-[13px] font-medium leading-5 text-[#C8C6E0]">
-            Borrow things you need from other students without buying them.
+            Rent useful things from other students without buying them.
           </p>
 
           {/* SEARCH */}
@@ -254,11 +254,10 @@ export default function BorrowPage() {
 
         {/* CONTENT */}
         <section className="px-5 pb-16 pt-6 sm:px-8">
-          {/* HEADER */}
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <h2 className="text-[19px] font-bold tracking-[-0.03em] text-[#172044]">
-                Available to borrow
+                Available to rent
               </h2>
 
               <p className="mt-1 text-[11px] font-medium text-[#858796]">
@@ -306,7 +305,7 @@ export default function BorrowPage() {
               </div>
 
               <p className="mt-4 text-sm font-semibold text-[#172044]">
-                No borrow items found
+                No rental items found
               </p>
 
               <p className="mt-1 text-xs text-[#898781]">
@@ -322,7 +321,7 @@ export default function BorrowPage() {
                 return (
                   <Link
                     key={item.id}
-                    href={`/borrow/${item.id}`}
+                    href={`/rent/${item.id}`}
                     className="group min-w-0"
                   >
                     <article className="overflow-hidden rounded-[22px] border border-[#E3DFD7] bg-[#FFFDF9] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(23,32,68,0.07)]">
@@ -352,16 +351,15 @@ export default function BorrowPage() {
                           </div>
                         )}
 
-                        {/* CATEGORY */}
                         <span className="absolute left-3 top-3 rounded-full bg-[#FFFDF9]/95 px-2.5 py-1.5 text-[9px] font-bold text-[#30354B] shadow-sm">
                           {getCategoryLabel(item.category)}
                         </span>
 
-                        {/* RENT */}
                         <div className="absolute bottom-3 left-3 rounded-[11px] bg-[#20265F]/92 px-2.5 py-2 text-white shadow-sm backdrop-blur-sm">
                           <p className="text-[9px] font-medium text-[#D9D7EE]">
                             Per day
                           </p>
+
                           <p className="text-[13px] font-extrabold">
                             ₹{Number(item.daily_rent).toLocaleString("en-IN")}
                           </p>
@@ -381,27 +379,23 @@ export default function BorrowPage() {
                           />
                         </div>
 
-                        {/* CONDITION */}
                         <span className="mt-2 inline-flex rounded-full bg-[#EEE7FA] px-2 py-1 text-[9px] font-bold text-[#6650A5]">
                           {getConditionLabel(item.condition)}
                         </span>
 
-                        {/* LOCATION */}
                         <div className="mt-2 flex items-center gap-1 text-[9px] font-medium text-[#7E8190]">
                           <MapPin size={11} />
                           <span className="truncate">{item.location}</span>
                         </div>
 
-                        {/* OWNER */}
                         <p className="mt-1 truncate text-[10px] font-medium text-[#7E8190]">
                           {ownerName}
                         </p>
 
-                        {/* DEPOSIT */}
                         <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#ECE9E2] pt-2.5">
                           <span className="flex items-center gap-1 text-[9px] font-medium text-[#858796]">
                             <CalendarDays size={11} />
-                            Deposit
+                            Refundable deposit
                           </span>
 
                           <span className="text-[10px] font-extrabold text-[#3E4357]">
