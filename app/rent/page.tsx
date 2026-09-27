@@ -7,6 +7,7 @@ import {
   ChevronRight,
   MapPin,
   Package,
+  Plus,
   Search,
   SlidersHorizontal,
 } from "lucide-react";
@@ -186,77 +187,81 @@ export default function RentPage() {
     <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
       <div className="mx-auto min-h-screen w-full max-w-[1280px] bg-[#FBF9F4] pb-28">
         {/* HERO */}
-        <section className="relative overflow-hidden rounded-b-[32px] bg-[#20265F] px-5 pb-8 pt-9 text-white sm:px-8 sm:pb-10 sm:pt-11">
+        <section className="relative overflow-hidden rounded-b-[30px] bg-[#20265F] px-5 pb-7 pt-8 text-white sm:px-8 sm:pb-9 sm:pt-10">
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-16 -top-16 h-60 w-60 rounded-full bg-[#5E4BD1]/30 blur-3xl"
+            className="pointer-events-none absolute -right-16 -top-20 h-60 w-60 rounded-full bg-[#5E4BD1]/30 blur-3xl"
           />
 
           <div
             aria-hidden
-            className="pointer-events-none absolute -bottom-24 left-16 h-52 w-52 rounded-full bg-[#8C7BFF]/20 blur-3xl"
+            className="pointer-events-none absolute -bottom-24 left-10 h-52 w-52 rounded-full bg-[#8C7BFF]/15 blur-3xl"
           />
 
-          <p className="relative text-[10px] font-bold uppercase tracking-[0.22em] text-[#BEB8FF]">
-            Campus rentals
-          </p>
+          <div className="relative">
+            <p className="text-[10px] font-bold uppercase tracking-[0.23em] text-[#BEB8FF]">
+              Campus rentals
+            </p>
 
-          <h1 className="relative mt-2 text-[30px] font-bold tracking-[-0.055em] sm:text-[38px]">
-            Rent
-          </h1>
+            <h1 className="mt-2 text-[31px] font-extrabold tracking-[-0.055em] sm:text-[38px]">
+              Rent
+            </h1>
 
-          <p className="relative mt-1.5 max-w-xl text-[13px] font-medium leading-5 text-[#C8C6E0]">
-            Rent useful things from other students without buying them.
-          </p>
+            <p className="mt-1.5 max-w-xl text-[13px] font-medium leading-5 text-[#C8C6E0]">
+              Useful things from other students, without the cost of buying
+              them.
+            </p>
 
-          {/* SEARCH */}
-          <div className="relative mt-6 flex h-12 items-center gap-3 rounded-[16px] bg-white px-4 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-            <Search
-              size={18}
-              className="shrink-0 text-[#5E4BD1]"
-              strokeWidth={1.8}
-            />
+            {/* SEARCH */}
+            <div className="mt-5 flex h-12 items-center gap-3 rounded-[16px] bg-white px-4 shadow-[0_10px_30px_rgba(0,0,0,0.22)]">
+              <Search
+                size={18}
+                className="shrink-0 text-[#5E4BD1]"
+                strokeWidth={1.8}
+              />
 
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search calculators, lab coats, kits..."
-              className="w-full bg-transparent text-[13px] font-medium text-[#172044] outline-none placeholder:text-[#9B9CA6]"
-            />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search calculators, lab coats, kits..."
+                className="min-w-0 flex-1 bg-transparent text-[13px] font-medium text-[#172044] outline-none placeholder:text-[#9B9CA6]"
+              />
 
-            <button
-              type="button"
-              aria-label="Filters"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#F0ECFA] text-[#5E50A1]"
-            >
-              <SlidersHorizontal size={15} strokeWidth={1.8} />
-            </button>
-          </div>
-
-          {/* CATEGORY PILLS */}
-          <nav className="relative mt-4 flex gap-2 overflow-x-auto no-scrollbar">
-            {categories.map(([id, label]) => (
               <button
-                key={id}
                 type="button"
-                onClick={() => setCategory(id)}
-                className={`flex h-9 shrink-0 items-center rounded-full px-4 text-[12px] font-semibold transition-colors ${
-                  category === id
-                    ? "bg-white text-[#20265F]"
-                    : "bg-white/10 text-[#DCD6FF] hover:bg-white/15"
-                }`}
+                aria-label="Filters"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[#F0ECFA] text-[#5E50A1]"
               >
-                {label}
+                <SlidersHorizontal size={15} strokeWidth={1.8} />
               </button>
-            ))}
-          </nav>
+            </div>
+
+            {/* CATEGORY PILLS */}
+            <nav className="mt-4 flex gap-2 overflow-x-auto no-scrollbar">
+              {categories.map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setCategory(id)}
+                  className={`flex h-9 shrink-0 items-center rounded-full px-4 text-[11px] font-semibold transition-colors ${
+                    category === id
+                      ? "bg-white text-[#20265F]"
+                      : "bg-white/10 text-[#DCD6FF] hover:bg-white/15"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+          </div>
         </section>
 
         {/* CONTENT */}
-        <section className="px-5 pb-16 pt-6 sm:px-8">
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-[19px] font-bold tracking-[-0.03em] text-[#172044]">
+        <section className="px-5 pb-16 pt-7 sm:px-8 sm:pt-8">
+          {/* SECTION HEADER */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-[20px] font-extrabold tracking-[-0.035em] text-[#172044]">
                 Available to rent
               </h2>
 
@@ -267,26 +272,48 @@ export default function RentPage() {
               </p>
             </div>
 
-            <div className="hidden shrink-0 items-center rounded-full border border-[#DCD8D0] bg-white px-3.5 py-2.5 text-[10px] font-bold text-[#4F5364] sm:flex">
-              <Package size={13} className="mr-1.5 text-[#6546D9]" />
-              Student-to-student
-            </div>
+            <Link
+              href="/rent/list"
+              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#5E4BD1] px-4 text-[10px] font-bold text-white shadow-[0_7px_18px_rgba(94,75,209,0.18)] transition hover:bg-[#503EC0]"
+            >
+              <Plus size={13} strokeWidth={2.2} />
+              List an item
+            </Link>
+          </div>
+
+          {/* SECONDARY ACTIONS */}
+          <div className="mt-4 flex gap-2.5 overflow-x-auto no-scrollbar">
+            <Link
+              href="/rent/my-rentals"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-[#DEDAD2] bg-white px-3.5 text-[10px] font-bold text-[#555968] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
+            >
+              <CalendarDays size={13} />
+              My rentals
+            </Link>
+
+            <Link
+              href="/rent/requests"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-[#DEDAD2] bg-white px-3.5 text-[10px] font-bold text-[#555968] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
+            >
+              <Package size={13} />
+              Rental requests
+            </Link>
           </div>
 
           {/* ERROR */}
           {error && (
-            <div className="mb-5 rounded-[16px] border border-[#F0CACA] bg-[#FFF4F4] px-4 py-3 text-[11px] leading-5 text-[#A33A3A]">
+            <div className="mt-5 rounded-[16px] border border-[#F0CACA] bg-[#FFF4F4] px-4 py-3 text-[11px] leading-5 text-[#A33A3A]">
               {error}
             </div>
           )}
 
-          {/* LOADING */}
+          {/* LISTING GRID */}
           {loading ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {Array.from({ length: 10 }).map((_, index) => (
                 <div
                   key={index}
-                  className="overflow-hidden rounded-[22px] border border-[#E3DFD7] bg-[#FFFDF9]"
+                  className="overflow-hidden rounded-[20px] border border-[#E3DFD7] bg-[#FFFDF9]"
                 >
                   <div className="aspect-[0.94] animate-pulse bg-[#E9E5DC]" />
 
@@ -299,7 +326,7 @@ export default function RentPage() {
               ))}
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="rounded-[22px] border border-dashed border-[#D3CFC6] bg-white/60 px-6 py-20 text-center">
+            <div className="mt-6 rounded-[22px] border border-dashed border-[#D3CFC6] bg-white/60 px-6 py-20 text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#EEE7FA] text-[#6546D9]">
                 <Package size={20} />
               </div>
@@ -313,7 +340,7 @@ export default function RentPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {filteredItems.map((item, index) => {
                 const ownerName =
                   profiles[item.owner_id]?.full_name || "Campus student";
@@ -324,7 +351,7 @@ export default function RentPage() {
                     href={`/rent/${item.id}`}
                     className="group min-w-0"
                   >
-                    <article className="overflow-hidden rounded-[22px] border border-[#E3DFD7] bg-[#FFFDF9] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(23,32,68,0.07)]">
+                    <article className="overflow-hidden rounded-[20px] border border-[#E3DFD7] bg-[#FFFDF9] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(23,32,68,0.07)]">
                       {/* IMAGE */}
                       <div
                         className="relative aspect-[0.94] overflow-hidden"
