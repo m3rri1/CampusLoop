@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  ChevronDown,
   Heart,
   Search,
   SlidersHorizontal,
@@ -86,6 +86,7 @@ function getPostedAgo(dateString: string) {
 }
 
 export default function MarketplacePage() {
+  const router = useRouter();
   const [supabase] = useState(() => createClient());
 
   const [category, setCategory] = useState("all");
@@ -93,6 +94,7 @@ export default function MarketplacePage() {
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -147,6 +149,29 @@ export default function MarketplacePage() {
         }
       }
 
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user && listingRows.length > 0) {
+        const { data: favoriteData } = await supabase
+          .from("marketplace_favorites")
+          .select("listing_id")
+          .eq("user_id", user.id)
+          .in(
+            "listing_id",
+            listingRows.map((listing) => listing.id)
+          );
+
+        if (mounted && favoriteData) {
+          setFavoriteIds(
+            new Set(favoriteData.map((favorite) => favorite.listing_id))
+          );
+        }
+      } else if (mounted) {
+        setFavoriteIds(new Set());
+      }
+
       if (mounted) {
         setLoading(false);
       }
@@ -158,6 +183,64 @@ export default function MarketplacePage() {
       mounted = false;
     };
   }, [supabase]);
+
+  async function toggleFavorite(
+    event: React.MouseEvent<HTMLButtonElement>,
+    listingId: string
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setError("");
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push(`/login?redirect=/marketplace`);
+      return;
+    }
+
+    const isFavorite = favoriteIds.has(listingId);
+
+    if (isFavorite) {
+      const { error: deleteError } = await supabase
+        .from("marketplace_favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("listing_id", listingId);
+
+      if (deleteError) {
+        setError(deleteError.message);
+        return;
+      }
+
+      setFavoriteIds((previous) => {
+        const next = new Set(previous);
+        next.delete(listingId);
+        return next;
+      });
+    } else {
+      const { error: insertError } = await supabase
+        .from("marketplace_favorites")
+        .insert({
+          user_id: user.id,
+          listing_id: listingId,
+        });
+
+      if (insertError) {
+        setError(insertError.message);
+        return;
+      }
+
+      setFavoriteIds((previous) => {
+        const next = new Set(previous);
+        next.add(listingId);
+        return next;
+      });
+    }
+  }
 
   const filteredListings = useMemo(() => {
     const search = query.trim().toLowerCase();
@@ -248,7 +331,6 @@ export default function MarketplacePage() {
 
         {/* LISTINGS */}
         <section className="px-5 pb-16 pt-6 sm:px-8">
-          {/* SECTION HEADER */}
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
               <h2 className="text-[19px] font-bold tracking-[-0.03em] text-[#172044]">
@@ -262,31 +344,36 @@ export default function MarketplacePage() {
               </p>
             </div>
 
-<div className="flex shrink-0 items-center gap-2">
-  <Link
-    href="/marketplace/my-listings"
-    className="rounded-full border border-[#DCD8D0] bg-white px-3.5 py-2.5 text-[10px] font-bold text-[#4F5364] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
-  >
-    My listings
-  </Link>
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                href="/marketplace/saved"
+                className="rounded-full border border-[#DCD8D0] bg-white px-3.5 py-2.5 text-[10px] font-bold text-[#4F5364] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
+              >
+                Saved
+              </Link>
 
-  <Link
-    href="/marketplace/sell"
-    className="rounded-full bg-[#20265F] px-4 py-2.5 text-[10px] font-bold text-white shadow-[0_5px_14px_rgba(32,38,95,0.14)] transition hover:bg-[#191E53]"
-  >
-    + Sell item
-  </Link>
-</div>
+              <Link
+                href="/marketplace/my-listings"
+                className="rounded-full border border-[#DCD8D0] bg-white px-3.5 py-2.5 text-[10px] font-bold text-[#4F5364] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
+              >
+                My listings
+              </Link>
+
+              <Link
+                href="/marketplace/sell"
+                className="rounded-full bg-[#20265F] px-4 py-2.5 text-[10px] font-bold text-white shadow-[0_5px_14px_rgba(32,38,95,0.14)] transition hover:bg-[#191E53]"
+              >
+                + Sell item
+              </Link>
+            </div>
           </div>
 
-          {/* ERROR */}
           {error && (
             <div className="mb-5 rounded-[16px] border border-[#F0CACA] bg-[#FFF4F4] px-4 py-3 text-[11px] leading-5 text-[#A33A3A]">
               {error}
             </div>
           )}
 
-          {/* LOADING */}
           {loading ? (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {Array.from({ length: 10 }).map((_, index) => (
@@ -327,6 +414,8 @@ export default function MarketplacePage() {
                   profiles[listing.seller_id]?.full_name ||
                   "Campus seller";
 
+                const isFavorite = favoriteIds.has(listing.id);
+
                 return (
                   <Link
                     key={listing.id}
@@ -354,22 +443,31 @@ export default function MarketplacePage() {
                           </div>
                         )}
 
-                        {/* CATEGORY */}
                         <span className="absolute left-3 top-3 rounded-full bg-[#FFFDF9]/95 px-2.5 py-1.5 text-[9px] font-bold text-[#30354B] shadow-sm">
                           {getCategoryLabel(listing.category)}
                         </span>
 
-                        {/* SAVE */}
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          aria-label="Save listing"
-                          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#FFFDF9]/95 text-[#343A56] shadow-[0_2px_9px_rgba(23,32,68,0.09)]"
+                          onClick={(event) =>
+                            toggleFavorite(event, listing.id)
+                          }
+                          aria-label={
+                            isFavorite
+                              ? "Remove from saved listings"
+                              : "Save listing"
+                          }
+                          className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-[#FFFDF9]/95 shadow-[0_2px_9px_rgba(23,32,68,0.09)] transition ${
+                            isFavorite
+                              ? "text-[#6546D9]"
+                              : "text-[#343A56]"
+                          }`}
                         >
-                          <Heart size={15} strokeWidth={1.8} />
+                          <Heart
+                            size={15}
+                            strokeWidth={1.8}
+                            fill={isFavorite ? "currentColor" : "none"}
+                          />
                         </button>
                       </div>
 
@@ -385,12 +483,10 @@ export default function MarketplacePage() {
                           </span>
                         </div>
 
-                        {/* CONDITION */}
                         <span className="mt-2 inline-flex rounded-full bg-[#EEE7FA] px-2 py-1 text-[9px] font-bold text-[#6650A5]">
                           {getConditionLabel(listing.condition)}
                         </span>
 
-                        {/* SELLER */}
                         <p className="mt-2 truncate text-[10px] font-medium text-[#7E8190]">
                           {sellerName} · {listing.location}
                         </p>

@@ -1,18 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   BadgeCheck,
   Heart,
   MapPin,
   Share2,
-  Star,
 } from "lucide-react";
-import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Listing = {
@@ -77,11 +74,11 @@ export default function ItemDetailPage() {
   const id = params.id as string;
 
   const router = useRouter();
-
   const [supabase] = useState(() => createClient());
 
   const [listing, setListing] = useState<Listing | null>(null);
   const [seller, setSeller] = useState<Profile | null>(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -131,6 +128,25 @@ export default function ItemDetailPage() {
         setSeller(sellerData as Profile);
       }
 
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: favoriteData } = await supabase
+          .from("marketplace_favorites")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("listing_id", listingData.id)
+          .maybeSingle();
+
+        if (mounted) {
+          setIsFavorite(Boolean(favoriteData));
+        }
+      } else if (mounted) {
+        setIsFavorite(false);
+      }
+
       if (mounted) {
         setLoading(false);
       }
@@ -144,6 +160,51 @@ export default function ItemDetailPage() {
       mounted = false;
     };
   }, [id, supabase]);
+
+  async function toggleFavorite() {
+    if (!listing) return;
+
+    setError("");
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push(`/login?redirect=/marketplace/${listing.id}`);
+      return;
+    }
+
+    if (isFavorite) {
+      const { error: deleteError } = await supabase
+        .from("marketplace_favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("listing_id", listing.id);
+
+      if (deleteError) {
+        setError(deleteError.message);
+        return;
+      }
+
+      setIsFavorite(false);
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from("marketplace_favorites")
+      .insert({
+        user_id: user.id,
+        listing_id: listing.id,
+      });
+
+    if (insertError) {
+      setError(insertError.message);
+      return;
+    }
+
+    setIsFavorite(true);
+  }
 
   async function handleChatWithSeller() {
     if (!listing) return;
@@ -223,7 +284,7 @@ export default function ItemDetailPage() {
     );
   }
 
-  if (error || !listing) {
+  if (error && !listing) {
     return (
       <main className="min-h-screen bg-[#EEECE5] text-[#172044]">
         <div className="mx-auto min-h-screen max-w-[1180px] bg-[#FBF9F4] px-4 py-6 sm:px-6 lg:px-8">
@@ -248,6 +309,8 @@ export default function ItemDetailPage() {
       </main>
     );
   }
+
+  if (!listing) return null;
 
   const sellerName = seller?.full_name || "Campus seller";
   const sellerInitial = sellerName.charAt(0).toUpperCase();
@@ -276,10 +339,23 @@ export default function ItemDetailPage() {
 
             <button
               type="button"
-              aria-label="Save listing"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1E2E6] bg-white text-[#4D5870] transition-colors hover:border-[#CFC5F4] hover:text-[#6546D9]"
+              onClick={toggleFavorite}
+              aria-label={
+                isFavorite
+                  ? "Remove from saved listings"
+                  : "Save listing"
+              }
+              className={`flex h-9 w-9 items-center justify-center rounded-full border bg-white transition-colors ${
+                isFavorite
+                  ? "border-[#CFC5F4] text-[#6546D9]"
+                  : "border-[#E1E2E6] text-[#4D5870] hover:border-[#CFC5F4] hover:text-[#6546D9]"
+              }`}
             >
-              <Heart size={16} strokeWidth={1.8} />
+              <Heart
+                size={16}
+                strokeWidth={1.8}
+                fill={isFavorite ? "currentColor" : "none"}
+              />
             </button>
           </div>
         </div>
@@ -325,7 +401,6 @@ export default function ItemDetailPage() {
               </p>
             </div>
 
-            {/* META */}
             <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-medium text-[#737C8F]">
               <MapPin
                 size={14}
@@ -340,10 +415,15 @@ export default function ItemDetailPage() {
               <span>{getPostedAgo(listing.created_at)}</span>
             </div>
 
-            {/* CONDITION */}
             <span className="mt-4 w-fit rounded-full border border-[#D9E7DF] bg-[#F0F8F4] px-3 py-1.5 text-[11px] font-bold text-[#39735A]">
               {getConditionLabel(listing.condition)}
             </span>
+
+            {error && (
+              <div className="mt-4 rounded-[14px] border border-[#F0CACA] bg-[#FFF4F4] px-3.5 py-3 text-[11px] leading-5 text-[#A33A3A]">
+                {error}
+              </div>
+            )}
 
             <div className="my-6 h-px bg-[#ECECE8]" />
 
@@ -397,7 +477,6 @@ export default function ItemDetailPage() {
               </div>
             </section>
 
-            {/* ACTION */}
             <div className="mt-auto pt-6">
               <button
                 type="button"
