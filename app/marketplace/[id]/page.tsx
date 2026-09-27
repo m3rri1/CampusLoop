@@ -495,12 +495,15 @@ export default function ItemDetailPage() {
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 rounded-2xl border border-[#E8E8E5] bg-[#FAFAF8] p-3.5">
+              <Link
+                href={`/marketplace/seller/${listing.seller_id}`}
+                className="group flex items-center gap-3 rounded-2xl border border-[#E8E8E5] bg-[#FAFAF8] p-3.5 transition-all hover:border-[#D7CFF6] hover:bg-[#F9F7FF] hover:shadow-[0_5px_18px_rgba(23,32,68,0.05)]"
+              >
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E8E3FF] text-[14px] font-extrabold text-[#6546D9]">
                   {sellerInitial}
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <p className="truncate text-[13px] font-bold text-[#17233D]">
                       {sellerName}
@@ -514,10 +517,14 @@ export default function ItemDetailPage() {
                   </div>
 
                   <p className="mt-1 text-[10px] text-[#9298A4]">
-                    CampusLoop marketplace seller
+                    View seller profile and other listings
                   </p>
                 </div>
-              </div>
+
+                <span className="shrink-0 text-[18px] font-light text-[#AAAEB9] transition-transform group-hover:translate-x-0.5">
+                  →
+                </span>
+              </Link>
             </section>
 
             {/* ACTION */}
