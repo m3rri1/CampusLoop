@@ -262,12 +262,21 @@ export default function MarketplacePage() {
               </p>
             </div>
 
-            <Link
-              href="/marketplace/sell"
-              className="shrink-0 rounded-full bg-[#20265F] px-4 py-2.5 text-[11px] font-bold text-white shadow-[0_5px_14px_rgba(32,38,95,0.14)] transition hover:bg-[#191E53]"
-            >
-              + Sell item
-            </Link>
+<div className="flex shrink-0 items-center gap-2">
+  <Link
+    href="/marketplace/my-listings"
+    className="rounded-full border border-[#DCD8D0] bg-white px-3.5 py-2.5 text-[10px] font-bold text-[#4F5364] transition hover:border-[#CFC8FF] hover:text-[#5D48D2]"
+  >
+    My listings
+  </Link>
+
+  <Link
+    href="/marketplace/sell"
+    className="rounded-full bg-[#20265F] px-4 py-2.5 text-[10px] font-bold text-white shadow-[0_5px_14px_rgba(32,38,95,0.14)] transition hover:bg-[#191E53]"
+  >
+    + Sell item
+  </Link>
+</div>
           </div>
 
           {/* ERROR */}

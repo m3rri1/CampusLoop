@@ -296,13 +296,13 @@ export default function SellMarketplacePage() {
         {/* HEADER */}
         <div className="border-b border-[#E4E0D8] bg-[#FBF9F4] px-5 py-4 sm:px-8">
           <div className="mx-auto flex max-w-3xl items-center gap-3">
-            <Link
-              href="/marketplace/my-listings"
-              aria-label="Back to my listings"
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1DDD4] bg-white text-[#555A6D] transition hover:border-[#CFC8FF]"
-            >
-              <ArrowLeft size={16} />
-            </Link>
+           <Link
+  href={editingId ? "/marketplace/my-listings" : "/marketplace"}
+  aria-label={editingId ? "Back to my listings" : "Back to marketplace"}
+  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1DDD4] bg-white text-[#555A6D] transition hover:border-[#CFC8FF]"
+>
+  <ArrowLeft size={16} />
+</Link>
 
             <div>
               <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#6952D7]">
