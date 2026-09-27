@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   BadgeCheck,
+  Eye,
   Heart,
   MapPin,
   Share2,
@@ -24,6 +25,7 @@ type Listing = {
   image_url: string | null;
   status: string;
   created_at: string;
+  view_count: number;
 };
 
 type Profile = {
@@ -76,6 +78,8 @@ export default function ItemDetailPage() {
   const router = useRouter();
   const [supabase] = useState(() => createClient());
 
+  const viewedListingRef = useRef<string | null>(null);
+
   const [listing, setListing] = useState<Listing | null>(null);
   const [seller, setSeller] = useState<Profile | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -93,7 +97,7 @@ export default function ItemDetailPage() {
       const { data: listingData, error: listingError } = await supabase
         .from("marketplace_listings")
         .select(
-          "id, seller_id, title, description, price, category, condition, location, image_url, status, created_at"
+          "id, seller_id, title, description, price, category, condition, location, image_url, status, created_at, view_count"
         )
         .eq("id", id)
         .maybeSingle();
@@ -117,6 +121,30 @@ export default function ItemDetailPage() {
       if (!mounted) return;
 
       setListing(listingData as Listing);
+
+      // Count one view for this page visit.
+      // The ref prevents accidental duplicate counting during effect re-runs.
+      if (viewedListingRef.current !== listingData.id) {
+        viewedListingRef.current = listingData.id;
+
+        const { data: newViewCount } = await supabase.rpc(
+          "increment_marketplace_listing_view",
+          {
+            p_listing_id: listingData.id,
+          }
+        );
+
+        if (mounted && typeof newViewCount === "number") {
+          setListing((current) =>
+            current
+              ? {
+                  ...current,
+                  view_count: newViewCount,
+                }
+              : current
+          );
+        }
+      }
 
       const { data: sellerData } = await supabase
         .from("profiles")
@@ -401,6 +429,7 @@ export default function ItemDetailPage() {
               </p>
             </div>
 
+            {/* META */}
             <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-medium text-[#737C8F]">
               <MapPin
                 size={14}
@@ -413,8 +442,22 @@ export default function ItemDetailPage() {
               <span className="text-[#D2D4D9]">•</span>
 
               <span>{getPostedAgo(listing.created_at)}</span>
+
+              <span className="text-[#D2D4D9]">•</span>
+
+              <Eye
+                size={14}
+                className="text-[#6546D9]"
+                strokeWidth={1.8}
+              />
+
+              <span>
+                {listing.view_count}{" "}
+                {listing.view_count === 1 ? "view" : "views"}
+              </span>
             </div>
 
+            {/* CONDITION */}
             <span className="mt-4 w-fit rounded-full border border-[#D9E7DF] bg-[#F0F8F4] px-3 py-1.5 text-[11px] font-bold text-[#39735A]">
               {getConditionLabel(listing.condition)}
             </span>
@@ -477,6 +520,7 @@ export default function ItemDetailPage() {
               </div>
             </section>
 
+            {/* ACTION */}
             <div className="mt-auto pt-6">
               <button
                 type="button"
