@@ -1,16 +1,17 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowUpRight, Check, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [supabase] = useState(() => createClient());
+
   const redirectTo = searchParams.get("redirect") || "/";
 
   const [email, setEmail] = useState("");
@@ -30,10 +31,14 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+    if (loginError) {
+      setError(loginError.message);
       setLoading(false);
       return;
     }
@@ -46,15 +51,18 @@ export default function LoginPage() {
     setError("");
     setGoogleLoading(true);
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
-      },
-    });
+    const { error: googleError } =
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(
+            redirectTo
+          )}`,
+        },
+      });
 
-    if (error) {
-      setError(error.message);
+    if (googleError) {
+      setError(googleError.message);
       setGoogleLoading(false);
     }
   }
@@ -63,27 +71,48 @@ export default function LoginPage() {
     <main className="min-h-screen bg-[#EEECE5] text-[#171A35]">
       <div className="mx-auto flex min-h-screen w-full max-w-[430px] flex-col bg-[#FBF9F4] px-6">
         <header className="flex items-center justify-center border-b border-[#E5E0D8] py-5">
-          <Link href="/" className="flex items-center" aria-label="CampusLoop home">
-            <Image src="/logo.png" alt="CampusLoop" width={120} height={76} className="h-10 w-auto object-contain" priority />
+          <Link
+            href="/"
+            className="flex items-center"
+            aria-label="CampusLoop home"
+          >
+            <Image
+              src="/logo.png"
+              alt="CampusLoop"
+              width={120}
+              height={76}
+              className="h-10 w-auto object-contain"
+              priority
+            />
           </Link>
         </header>
 
         <section className="pt-14">
-          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6654D9]">Welcome back</p>
+          <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6654D9]">
+            Welcome back
+          </p>
+
           <h1 className="text-[40px] font-bold leading-[0.98] tracking-[-0.055em]">
-            Back to your <span className="text-[#6654D9]">campus loop.</span>
+            Back to your{" "}
+            <span className="text-[#6654D9]">campus loop.</span>
           </h1>
+
           <p className="mt-5 max-w-[350px] text-[14px] leading-6 text-[#696979]">
-            Sign in to buy, sell, find lost things and connect with students around your campus.
+            Sign in to buy, sell, find lost things and connect with students
+            around your campus.
           </p>
         </section>
 
         <section className="mt-9">
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label htmlFor="email" className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768A]">
+              <label
+                htmlFor="email"
+                className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768A]"
+              >
                 College email
               </label>
+
               <input
                 id="email"
                 type="email"
@@ -97,13 +126,21 @@ export default function LoginPage() {
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label htmlFor="password" className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768A]">
+                <label
+                  htmlFor="password"
+                  className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#77768A]"
+                >
                   Password
                 </label>
-                <Link href="/forgot-password" className="text-[11px] font-semibold text-[#6654D9]">
+
+                <Link
+                  href="/forgot-password"
+                  className="text-[11px] font-semibold text-[#6654D9]"
+                >
                   Forgot password?
                 </Link>
               </div>
+
               <input
                 id="password"
                 type="password"
@@ -126,14 +163,23 @@ export default function LoginPage() {
               disabled={loading}
               className="flex h-[54px] w-full items-center justify-between rounded-[14px] bg-[#20265F] px-5 text-[13px] font-semibold text-white transition hover:bg-[#181D50] disabled:opacity-60"
             >
-              <span>{loading ? "Signing in..." : "Sign in to CampusLoop"}</span>
-              {loading ? <Loader2 size={17} className="animate-spin" /> : <ArrowUpRight size={18} />}
+              <span>
+                {loading ? "Signing in..." : "Sign in to CampusLoop"}
+              </span>
+
+              {loading ? (
+                <Loader2 size={17} className="animate-spin" />
+              ) : (
+                <ArrowUpRight size={18} />
+              )}
             </button>
           </form>
 
           <div className="my-7 flex items-center gap-4">
             <div className="h-px flex-1 bg-[#DEDAD2]" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#AAA8A0]">or</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#AAA8A0]">
+              or
+            </span>
             <div className="h-px flex-1 bg-[#DEDAD2]" />
           </div>
 
@@ -143,7 +189,10 @@ export default function LoginPage() {
             disabled={googleLoading}
             className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[14px] border border-[#D8D5CC] bg-[#FFFDF9] text-[13px] font-semibold text-[#25263A] transition hover:bg-white disabled:opacity-60"
           >
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[12px] font-bold shadow-sm">G</span>
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-[12px] font-bold shadow-sm">
+              G
+            </span>
+
             {googleLoading ? "Connecting..." : "Continue with Google"}
           </button>
         </section>
@@ -151,8 +200,14 @@ export default function LoginPage() {
         <div className="mt-auto border-t border-[#DEDAD2] py-7 text-center">
           <p className="text-[12px] text-[#77768A]">
             New to CampusLoop?{" "}
-            <Link href="/signup" className="font-semibold text-[#6654D9]">Create an account</Link>
+            <Link
+              href="/signup"
+              className="font-semibold text-[#6654D9]"
+            >
+              Create an account
+            </Link>
           </p>
+
           <div className="mt-4 flex items-center justify-center gap-2 text-[9px] uppercase tracking-[0.15em] text-[#AAA8A0]">
             <Check size={11} />
             Built for your campus
@@ -160,5 +215,24 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#EEECE5]">
+          <div className="mx-auto flex min-h-screen w-full max-w-[430px] items-center justify-center bg-[#FBF9F4]">
+            <Loader2
+              size={22}
+              className="animate-spin text-[#6654D9]"
+            />
+          </div>
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

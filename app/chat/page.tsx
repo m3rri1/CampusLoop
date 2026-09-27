@@ -642,23 +642,39 @@ export default function ChatPage() {
       return;
     }
 
-    const next: Record<string, { count: number; latestMessage: string }> = {};
+ const next: Record<
+  string,
+  { count: number; latestMessage: string }
+> = {};
 
-    (data ?? []).forEach((row) => {
-      const item = row as {
-        conversation_type: "lost_found" | "marketplace" | "rent" | "service";
-        conversation_id: string;
-        unread_count: number;
-        latest_unread_message: string | null;
-      };
+type UnreadConversationRow = {
+  conversation_type:
+    | "lost_found"
+    | "marketplace"
+    | "rent"
+    | "service";
+  conversation_id: string;
+  unread_count: number;
+  latest_unread_message: string | null;
+};
 
-      if (item.unread_count > 0) {
-        next[unreadKey(item.conversation_type, item.conversation_id)] = {
-          count: item.unread_count,
-          latestMessage: item.latest_unread_message || "New message",
-        };
-      }
-    });
+const unreadRows =
+  (data ?? []) as UnreadConversationRow[];
+
+unreadRows.forEach((row) => {
+  if (row.unread_count > 0) {
+    next[
+      unreadKey(
+        row.conversation_type,
+        row.conversation_id
+      )
+    ] = {
+      count: row.unread_count,
+      latestMessage:
+        row.latest_unread_message || "New message",
+    };
+  }
+});
 
     setUnreadConversations(next);
   }

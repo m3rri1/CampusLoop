@@ -9,19 +9,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import {
-
   ArrowLeft,
-
   BadgeCheck,
-
   CalendarDays,
-
   CheckCircle2,
-
   MapPin,
-
+  MessageCircle,
   Package,
-
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";

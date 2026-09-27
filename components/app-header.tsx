@@ -130,13 +130,14 @@ export default function AppHeader() {
       return;
     }
 
+    const currentUser = user;
     let mounted = true;
 
     async function loadNotificationCount() {
       const { data, error } = await supabase
         .from("notifications")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUser.id)
         .eq("is_read", false);
 
       if (!error && mounted) {
@@ -156,14 +157,14 @@ export default function AppHeader() {
     loadChatCount();
 
     const notificationChannel = supabase
-      .channel(`header-notifications-${user.id}`)
+      .channel(`header-notifications-${currentUser.id}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${currentUser.id}`,
         },
         () => {
           loadNotificationCount();
@@ -172,7 +173,7 @@ export default function AppHeader() {
       .subscribe();
 
     const chatChannel = supabase
-      .channel(`header-chat-${user.id}`)
+      .channel(`header-chat-${currentUser.id}`)
       .on(
         "postgres_changes",
         {
@@ -238,11 +239,13 @@ export default function AppHeader() {
       return;
     }
 
+    const currentUser = user;
+
     async function loadNotifications() {
       const { data, error } = await supabase
         .from("notifications")
         .select("id, title, body, href, is_read, created_at")
-        .eq("user_id", user.id)
+        .eq("user_id", currentUser.id)
         .order("created_at", { ascending: false })
         .limit(6);
 
@@ -289,7 +292,6 @@ export default function AppHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#E8E3DA] bg-[#FBF9F4]/95 backdrop-blur-xl">
       <div className="mx-auto flex h-[64px] w-full max-w-[1280px] items-center gap-4 px-4 sm:px-6 lg:h-[70px] lg:px-8">
-        {/* BRAND */}
         <Link
           href="/"
           aria-label="CampusLoop home"
@@ -305,7 +307,6 @@ export default function AppHeader() {
           />
         </Link>
 
-        {/* DESKTOP NAV */}
         <nav className="hidden min-w-0 flex-1 justify-center md:flex">
           <div className="flex items-center rounded-full border border-[#E6E1D8] bg-white/80 p-1">
             {navLinks.map((item) => {
@@ -344,19 +345,15 @@ export default function AppHeader() {
           </div>
         </nav>
 
-        {/* MOBILE SPACER */}
         <div className="flex-1 md:hidden" />
 
-        {/* RIGHT ACTIONS */}
         <div className="flex shrink-0 items-center gap-2" data-header-menu>
-          {/* USER GREETING — desktop only */}
           {user && (
             <span className="hidden max-w-[110px] truncate text-[10px] font-bold text-[#676A7A] lg:block">
               Hi, {firstName}
             </span>
           )}
 
-          {/* CHAT — compact duplicate of the desktop nav on mobile */}
           {user && (
             <Link
               href="/chat"
@@ -377,7 +374,6 @@ export default function AppHeader() {
             </Link>
           )}
 
-          {/* NOTIFICATIONS */}
           {user ? (
             <div className="relative">
               <button
@@ -403,7 +399,7 @@ export default function AppHeader() {
               </button>
 
               {showNotifications && (
-                <div className="fixed right-3 top-[72px] z-[60] w-[calc(100vw-24px)] max-w-[360px] overflow-hidden rounded-[20px] md:absolute md:right-0 md:top-12 md:z-50 border border-[#E3DED5] bg-white shadow-[0_18px_45px_rgba(23,32,68,0.14)]">
+                <div className="fixed right-3 top-[72px] z-[60] w-[calc(100vw-24px)] max-w-[360px] overflow-hidden rounded-[20px] border border-[#E3DED5] bg-white shadow-[0_18px_45px_rgba(23,32,68,0.14)] md:absolute md:right-0 md:top-12 md:z-50">
                   <div className="flex items-center justify-between border-b border-[#EEEAE3] px-4 py-3.5">
                     <div>
                       <p className="text-[12px] font-black text-[#171A35]">
@@ -522,7 +518,6 @@ export default function AppHeader() {
             </Link>
           )}
 
-          {/* PROFILE */}
           {user && (
             <div className="relative">
               <button
