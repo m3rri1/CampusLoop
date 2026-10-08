@@ -514,12 +514,13 @@ export default function AppHeader() {
               )}
             </div>
           ) : (
-            <Link
-  href="/login"
-  className="rounded-full bg-[#20265F] px-4 py-2 text-[10px] font-bold text-white transition hover:bg-[#171C4C]"
->
-  Sign in
+            <Link 
+  href="/login" 
+  className="rounded-full bg-[#20265F] px-4 py-2 text-[10px] font-bold !text-white transition hover:bg-[#171C4C]"
+> 
+  Sign in 
 </Link>
+
           )}
 
           {user && (
