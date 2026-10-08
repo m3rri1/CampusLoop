@@ -115,59 +115,59 @@ export default function AppNavigation() {
   }, [supabase]);
 
   return (
-    <nav className="fixed bottom-3 left-1/2 z-50 w-[calc(100%-24px)] max-w-[520px] -translate-x-1/2 rounded-[22px] border border-[#E3DFD7] bg-white/95 px-2 py-2 shadow-[0_10px_35px_rgba(23,32,68,0.12)] backdrop-blur md:hidden">
-      <div className="grid grid-cols-6 items-center">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#E3DFD7] bg-white md:hidden">
+      <div className="mx-auto w-full max-w-[430px] px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="grid grid-cols-6 items-center py-1.5">
+          {items.map((item) => {
+            const Icon = item.icon;
 
-        {items.map((item) => {
-          const Icon = item.icon;
+            const active =
+              pathname === item.href ||
+              (item.href !== "/" &&
+                pathname.startsWith(`${item.href}/`));
 
-          const active =
-            pathname === item.href ||
-            (item.href !== "/" &&
-              pathname.startsWith(`${item.href}/`));
+            const isChat = item.href === "/chat";
 
-          const isChat = item.href === "/chat";
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="relative flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-1.5"
-            >
-              <div
-                className={`relative flex h-7 w-7 items-center justify-center rounded-full transition ${
-                  active
-                    ? "bg-[#F0ECFF] text-[#5D48D2]"
-                    : "text-[#858796]"
-                }`}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="relative flex min-w-0 flex-col items-center gap-1 px-1 py-1.5"
               >
-                <Icon
-                  size={16}
-                  strokeWidth={active ? 2 : 1.7}
-                />
+                <div
+                  className={`relative flex h-7 w-7 items-center justify-center rounded-full transition ${
+                    active
+                      ? "bg-[#F0ECFF] text-[#5D48D2]"
+                      : "text-[#858796]"
+                  }`}
+                >
+                  <Icon
+                    size={16}
+                    strokeWidth={active ? 2 : 1.7}
+                  />
 
-                {isChat && unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#6350D8] px-1 text-[8px] font-bold leading-none text-white ring-2 ring-white">
-                    {unreadCount > 99
-                      ? "99+"
-                      : unreadCount}
-                  </span>
-                )}
-              </div>
+                  {isChat && unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#6350D8] px-1 text-[8px] font-bold leading-none text-white ring-2 ring-white">
+                      {unreadCount > 99
+                        ? "99+"
+                        : unreadCount}
+                    </span>
+                  )}
+                </div>
 
-              <span
-                className={`truncate text-[8px] font-medium ${
-                  active
-                    ? "text-[#5D48D2]"
-                    : "text-[#858796]"
-                }`}
-              >
-                {item.label}
-              </span>
-            </Link>
-          );
-        })}
-
+                <span
+                  className={`truncate text-[8px] font-medium ${
+                    active
+                      ? "text-[#5D48D2]"
+                      : "text-[#858796]"
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );
