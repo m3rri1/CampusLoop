@@ -26,13 +26,18 @@ export default function RootLayout({
       className={`${instrument.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-[#EEECE5] text-[#17151C] font-sans">
-
         <AppHeader />
 
-        {children}
+        {/* 
+          Mobile bottom navigation is fixed.
+          This padding keeps page content and buttons
+          above the navigation instead of hiding behind it.
+        */}
+        <div className="pb-[78px] md:pb-0">
+          {children}
+        </div>
 
         <AppNavigation />
-
       </body>
     </html>
   );

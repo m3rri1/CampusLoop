@@ -42,7 +42,14 @@ export default function ForgotPasswordPage() {
         </header>
 
         <section className="pt-14 sm:pt-20">
-          <Image src="/logo.png" alt="CampusLoop" width={120} height={76} className="h-11 w-auto object-contain" priority />
+          <Image
+  src="/logo.png"
+  alt="CampusLoop"
+  width={220}
+  height={100}
+  className="h-[54px] w-[170px] object-contain object-left"
+  priority
+/>
           <p className="mt-9 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6654D9]">Account recovery</p>
           <h1 className="mt-3 text-[38px] font-bold leading-[1] tracking-[-0.055em] sm:text-[44px]">Reset your password.</h1>
           <p className="mt-4 max-w-[380px] text-[14px] leading-6 text-[#696979]">Enter the email connected to your CampusLoop account and we'll send you a secure reset link.</p>

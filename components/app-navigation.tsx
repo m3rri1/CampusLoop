@@ -115,9 +115,29 @@ export default function AppNavigation() {
   }, [supabase]);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#E3DFD7] bg-white md:hidden">
-      <div className="mx-auto w-full max-w-[430px] px-2 pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-6 items-center py-1.5">
+    <nav
+      className="
+        fixed
+        inset-x-0
+        bottom-0
+        z-50
+        border-t
+        border-[#E3DFD7]
+        bg-white
+        md:hidden
+      "
+    >
+      <div
+        className="
+          mx-auto
+          w-full
+          max-w-[430px]
+          px-2
+          pt-1.5
+          pb-[calc(6px+env(safe-area-inset-bottom))]
+        "
+      >
+        <div className="grid grid-cols-6 items-center">
           {items.map((item) => {
             const Icon = item.icon;
 
@@ -132,7 +152,16 @@ export default function AppNavigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="relative flex min-w-0 flex-col items-center gap-1 px-1 py-1.5"
+                className="
+                  relative
+                  flex
+                  min-w-0
+                  flex-col
+                  items-center
+                  gap-1
+                  px-1
+                  py-1.5
+                "
               >
                 <div
                   className={`relative flex h-7 w-7 items-center justify-center rounded-full transition ${

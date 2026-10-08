@@ -72,14 +72,14 @@ export default function SignupPage() {
         {/* Header */}
         <header className="flex items-center justify-center border-b border-[#DEDBD2] py-5">
           <Link href="/" className="flex items-center" aria-label="CampusLoop home">
-            <Image
-              src="/logo.png"
-              alt="CampusLoop"
-              width={120}
-              height={76}
-              className="h-10 w-auto object-contain"
-              priority
-            />
+<Image
+  src="/logo.png"
+  alt="CampusLoop"
+  width={220}
+  height={100}
+  className="h-[54px] w-[170px] object-contain object-left"
+  priority
+/>
           </Link>
         </header>
 

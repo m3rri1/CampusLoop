@@ -259,10 +259,6 @@ export default function AppHeader() {
 
   useEffect(() => {
     function closeMenus(event: MouseEvent) {
-      const target = event.target as Node;
-
-      if (!(target instanceof Node)) return;
-
       const element = event.target as HTMLElement;
 
       if (!element.closest("[data-header-menu]")) {
@@ -291,22 +287,25 @@ export default function AppHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-[#E8E3DA] bg-[#FBF9F4]/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-[64px] w-full max-w-[1280px] items-center gap-4 px-4 sm:px-6 lg:h-[70px] lg:px-8">
+      <div className="mx-auto flex h-[62px] w-full max-w-[1280px] items-center px-3 sm:h-[70px] sm:gap-4 sm:px-6 lg:px-8">
+
+        {/* LOGO */}
         <Link
           href="/"
           aria-label="CampusLoop home"
-          className="flex shrink-0 items-center"
+          className="flex min-w-0 shrink items-center"
         >
-         <Image
-  src="/logo.png"
-  alt="CampusLoop"
-  width={220}
-  height={100}
-  className="h-[54px] w-[170px] object-contain object-left"
-  priority
-/>
+          <Image
+            src="/logo.png"
+            alt="CampusLoop"
+            width={220}
+            height={100}
+            className="h-[42px] w-[125px] object-contain object-left sm:h-[54px] sm:w-[170px]"
+            priority
+          />
         </Link>
 
+        {/* DESKTOP NAV */}
         <nav className="hidden min-w-0 flex-1 justify-center md:flex">
           <div className="flex items-center rounded-full border border-[#E6E1D8] bg-white/80 p-1">
             {navLinks.map((item) => {
@@ -347,7 +346,11 @@ export default function AppHeader() {
 
         <div className="flex-1 md:hidden" />
 
-        <div className="flex shrink-0 items-center gap-2" data-header-menu>
+        {/* RIGHT SIDE */}
+        <div
+          className="flex shrink-0 items-center gap-1.5 sm:gap-2"
+          data-header-menu
+        >
           {user && (
             <span className="hidden max-w-[110px] truncate text-[10px] font-bold text-[#676A7A] lg:block">
               Hi, {firstName}
@@ -358,16 +361,16 @@ export default function AppHeader() {
             <Link
               href="/chat"
               aria-label="Chat"
-              className={`relative flex h-10 w-10 items-center justify-center rounded-full border transition md:hidden ${
+              className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition md:hidden ${
                 pathname.startsWith("/chat")
                   ? "border-[#CFC8FF] bg-[#F0ECFF] text-[#5D48D2]"
-                  : "border-[#E1DDD4] bg-white text-[#3D4257] hover:border-[#CFC8FF]"
+                  : "border-[#E1DDD4] bg-white text-[#3D4257]"
               }`}
             >
-              <MessageCircle size={17} strokeWidth={1.9} />
+              <MessageCircle size={16} strokeWidth={1.9} />
 
               {chatCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex min-w-[17px] items-center justify-center rounded-full bg-[#5D48D2] px-1 text-[8px] font-black leading-[17px] text-white ring-2 ring-[#FBF9F4]">
+                <span className="absolute -right-1 -top-1 flex min-w-[16px] items-center justify-center rounded-full bg-[#5D48D2] px-1 text-[8px] font-black leading-[16px] text-white ring-2 ring-[#FBF9F4]">
                   {chatCount > 99 ? "99+" : chatCount}
                 </span>
               )}
@@ -383,23 +386,23 @@ export default function AppHeader() {
                   setShowNotifications((current) => !current);
                   setShowProfileMenu(false);
                 }}
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full border transition ${
+                className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition ${
                   showNotifications
                     ? "border-[#CFC8FF] bg-[#F0ECFF] text-[#5D48D2]"
-                    : "border-[#E1DDD4] bg-white text-[#3D4257] hover:border-[#CFC8FF]"
+                    : "border-[#E1DDD4] bg-white text-[#3D4257]"
                 }`}
               >
-                <Bell size={17} strokeWidth={1.8} />
+                <Bell size={16} strokeWidth={1.8} />
 
                 {notificationCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex min-w-[17px] items-center justify-center rounded-full bg-[#5D48D2] px-1 text-[8px] font-black leading-[17px] text-white ring-2 ring-[#FBF9F4]">
+                  <span className="absolute -right-1 -top-1 flex min-w-[16px] items-center justify-center rounded-full bg-[#5D48D2] px-1 text-[8px] font-black leading-[16px] text-white ring-2 ring-[#FBF9F4]">
                     {notificationCount > 99 ? "99+" : notificationCount}
                   </span>
                 )}
               </button>
 
               {showNotifications && (
-                <div className="fixed right-3 top-[72px] z-[60] w-[calc(100vw-24px)] max-w-[360px] overflow-hidden rounded-[20px] border border-[#E3DED5] bg-white shadow-[0_18px_45px_rgba(23,32,68,0.14)] md:absolute md:right-0 md:top-12 md:z-50">
+                <div className="fixed right-3 top-[68px] z-[60] w-[calc(100vw-24px)] max-w-[360px] overflow-hidden rounded-[20px] border border-[#E3DED5] bg-white shadow-[0_18px_45px_rgba(23,32,68,0.14)] md:absolute md:right-0 md:top-12">
                   <div className="flex items-center justify-between border-b border-[#EEEAE3] px-4 py-3.5">
                     <div>
                       <p className="text-[12px] font-black text-[#171A35]">
@@ -437,6 +440,7 @@ export default function AppHeader() {
                       <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-[#F0ECFF] text-[#5D48D2]">
                         <Bell size={17} />
                       </div>
+
                       <p className="mt-3 text-[11px] font-bold text-[#4E5163]">
                         No notifications yet
                       </p>
@@ -512,7 +516,7 @@ export default function AppHeader() {
           ) : (
             <Link
               href="/login"
-              className="rounded-full bg-[#20265F] px-4 py-2 text-[10px] font-bold text-white transition hover:bg-[#171C4C]"
+              className="flex h-9 min-w-[70px] shrink-0 items-center justify-center rounded-full bg-[#20265F] px-3.5 text-[10px] font-bold text-white whitespace-nowrap shadow-[0_3px_10px_rgba(32,38,95,0.16)] transition hover:bg-[#171C4C] sm:h-10 sm:min-w-[78px] sm:px-4 sm:text-[11px]"
             >
               Sign in
             </Link>
@@ -527,10 +531,10 @@ export default function AppHeader() {
                   setShowProfileMenu((current) => !current);
                   setShowNotifications(false);
                 }}
-                className={`flex h-10 items-center gap-2 rounded-full border px-1.5 pr-2.5 transition ${
+                className={`flex h-9 shrink-0 items-center gap-2 rounded-full border px-1.5 pr-2.5 transition ${
                   showProfileMenu
                     ? "border-[#CFC8FF] bg-[#F0ECFF]"
-                    : "border-[#E1DDD4] bg-white hover:border-[#CFC8FF]"
+                    : "border-[#E1DDD4] bg-white"
                 }`}
               >
                 <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-[#EEE9FF] text-[8px] font-black text-[#5D48D2]">
@@ -559,6 +563,7 @@ export default function AppHeader() {
                     <p className="truncate text-[10px] font-black text-[#252842]">
                       {getDisplayName(user)}
                     </p>
+
                     <p className="mt-0.5 truncate text-[8px] text-[#858796]">
                       {user.email}
                     </p>

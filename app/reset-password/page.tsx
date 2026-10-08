@@ -69,7 +69,14 @@ export default function ResetPasswordPage() {
       <div className="mx-auto flex min-h-screen w-full max-w-[520px] flex-col bg-[#FBF9F4] px-5 sm:px-8">
         <header className="flex items-center border-b border-[#E5E0D8] py-4">
           <Link href="/login" className="flex items-center" aria-label="CampusLoop home">
-            <Image src="/logo.png" alt="CampusLoop" width={120} height={76} className="h-11 w-auto object-contain" priority />
+           <Image
+  src="/logo.png"
+  alt="CampusLoop"
+  width={220}
+  height={100}
+  className="h-[54px] w-[170px] object-contain object-left"
+  priority
+/>
           </Link>
         </header>
 
