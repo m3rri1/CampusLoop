@@ -81,7 +81,7 @@ function LoginForm() {
   alt="CampusLoop"
   width={220}
   height={100}
-  className="h-[54px] w-[170px] object-contain object-left"
+  className="h-[54px] w-[170px] object-contain object-middle"
   priority
 />
           </Link>

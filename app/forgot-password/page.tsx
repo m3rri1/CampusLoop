@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
   alt="CampusLoop"
   width={220}
   height={100}
-  className="h-[54px] w-[170px] object-contain object-left"
+  className="h-[54px] w-[170px] object-contain object-middle"
   priority
 />
           <p className="mt-9 text-[10px] font-bold uppercase tracking-[0.24em] text-[#6654D9]">Account recovery</p>

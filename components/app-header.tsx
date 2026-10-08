@@ -300,7 +300,7 @@ export default function AppHeader() {
             alt="CampusLoop"
             width={220}
             height={100}
-            className="h-[42px] w-[125px] object-contain object-left sm:h-[54px] sm:w-[170px]"
+            className="h-[54px] w-[170px] object-contain object-left"
             priority
           />
         </Link>
@@ -515,11 +515,11 @@ export default function AppHeader() {
             </div>
           ) : (
             <Link
-              href="/login"
-              className="flex h-9 min-w-[70px] shrink-0 items-center justify-center rounded-full bg-[#20265F] px-3.5 text-[10px] font-bold text-white whitespace-nowrap shadow-[0_3px_10px_rgba(32,38,95,0.16)] transition hover:bg-[#171C4C] sm:h-10 sm:min-w-[78px] sm:px-4 sm:text-[11px]"
-            >
-              Sign in
-            </Link>
+  href="/login"
+  className="rounded-full bg-[#20265F] px-4 py-2 text-[10px] font-bold text-white transition hover:bg-[#171C4C]"
+>
+  Sign in
+</Link>
           )}
 
           {user && (
