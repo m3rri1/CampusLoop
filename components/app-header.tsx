@@ -297,14 +297,14 @@ export default function AppHeader() {
           aria-label="CampusLoop home"
           className="flex shrink-0 items-center"
         >
-          <Image
-            src="/logo.png"
-            alt="CampusLoop"
-            width={120}
-            height={76}
-            className="h-[42px] w-auto object-contain sm:h-[46px]"
-            priority
-          />
+         <Image
+  src="/logo.png"
+  alt="CampusLoop"
+  width={220}
+  height={100}
+  className="h-[54px] w-[170px] object-contain object-left"
+  priority
+/>
         </Link>
 
         <nav className="hidden min-w-0 flex-1 justify-center md:flex">
